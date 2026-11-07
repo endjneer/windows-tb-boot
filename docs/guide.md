@@ -338,16 +338,16 @@ C:\Repair\repair-usb4-boot.bat /check
 
 `/check` is read-only: it shows the three registry values with the result and the state of `ThunderboltBoot`, and exits with 0 if everything is correct, 2 if something needs fixing, 1 on error. The registry part needs no administrator rights; reading `ThunderboltBoot` does, and without them the script reports it without treating it as an error. On 30/10/2026 `/check` and `/status` were tried from Windows, with and without administrator rights, and in WinRE (Phase 6).
 
-**Protect the folder.** A folder created directly in `C:\` can usually be modified by any user and any program, even without administrator rights. These scripts, however, are run as administrator: whoever changes them gets their own commands run with those rights. So leave the folder writable by administrators only. In an administrator Command Prompt:
+**Protect the folder.** A folder created directly in `C:\` can usually be modified by any user and any program, even without administrator rights: `icacls C:\Repair` then shows `NT AUTHORITY\Authenticated Users` with `(M)`. These scripts, however, are run as administrator: whoever changes them gets their own commands run with those rights. So leave the folder writable by administrators only. In Command Prompt or PowerShell, as administrator:
 
 ```
-icacls C:\Repair /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX
+icacls C:\Repair /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-32-545:(OI)(CI)RX"
 icacls C:\Repair\* /reset
-icacls C:\Repair /setowner *S-1-5-32-544 /T
+icacls C:\Repair /setowner "*S-1-5-32-544" /T
 icacls C:\Repair
 ```
 
-The first command leaves full control only to SYSTEM and Administrators and read access to Users (the `S-1-5-…` identifiers avoid translated names); the second applies the same permissions to the files already copied; the third makes the Administrators group the owner. The last one only shows the result: there must be three entries, SYSTEM and Administrators with `(F)` and Users with `(RX)`, possibly with translated names. From then on, copying a new version of the scripts asks for administrator permission. The scripts only read from their own folder, so `/check` should keep working without administrator rights. Not verified yet.
+The first command leaves full control only to SYSTEM and Administrators and read access to Users (the `S-1-5-…` identifiers avoid translated names, the quotes are needed in PowerShell); the second applies the same permissions to the files already copied; the third makes the Administrators group the owner. The last one only shows the result: there must be three entries, `BUILTIN\Administrators` and `NT AUTHORITY\SYSTEM` with `(OI)(CI)(F)` and `BUILTIN\Users` with `(OI)(CI)(RX)`, without `(I)` and without `Authenticated Users`. On Windows in other languages the names may be translated. From then on, copying a new version of the scripts asks for administrator permission. The scripts only read from their own folder, so `/check` should keep working without administrator rights. Not verified yet.
 
 ### 5.2 Put the internal system back in first place
 
