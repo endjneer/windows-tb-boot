@@ -1,0 +1,10 @@
+{
+  "name": "windows-tb-boot",
+  "description": "Agent skill that guides users through installing, booting and repairing Windows 11 on an NVMe SSD in a Thunderbolt or USB4 enclosure, on any laptop. Verified on one laptop only.",
+  "author": {
+    "name": "endjneer"
+  },
+  "repository": "https://github.com/endjneer/windows-tb-boot",
+  "license": "MIT AND CC-BY-4.0",
+  "skills": "./.claude/skills/"
+}

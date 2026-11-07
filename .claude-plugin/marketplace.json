@@ -1,0 +1,14 @@
+{
+  "name": "windows-tb-boot",
+  "owner": {
+    "name": "endjneer"
+  },
+  "description": "Guide and agent skill for booting Windows 11 natively from an NVMe SSD in a Thunderbolt or USB4 enclosure.",
+  "plugins": [
+    {
+      "name": "windows-tb-boot",
+      "source": "./",
+      "description": "Agent skill that guides users through booting Windows 11 from a Thunderbolt or USB4 SSD, on any laptop."
+    }
+  ]
+}
