@@ -8,6 +8,57 @@ Guida e script per installare e **avviare nativamente** Windows 11 da un SSD NVM
 
 > 🚑 **Emergenza?** Windows non parte dopo un aggiornamento, oppure l'SSD è sparito dal menu F12: **[docs/quick-recovery.it.md](docs/quick-recovery.it.md)**, i passi minimi in una pagina.
 
+> 🤖 **Assistente AI.** Una skill per Claude Code e altri agenti AI ti guida passo passo e legge con te l'output dei comandi: per installarla vedi [Assistente AI](#assistente-ai).
+
+---
+
+## Assistente AI
+
+La skill per agenti AI `windows-tb-boot` ti accompagna passo passo nella procedura e nella diagnosi: capisce a che punto sei, ti porta alla sezione giusta della guida e legge con te l'output dei comandi. È pensata per qualunque notebook con un SSD in un box Thunderbolt o USB4, ma la procedura è verificata solo sull'hardware descritto in [Ambiente di test](#ambiente-di-test).
+
+**Installala in un modo solo**, quello dell'agente che usi: con il clone aperto e il plugin installato, Claude Code mostra la skill due volte.
+
+### Claude Code
+
+In Claude Code scrivi questi due comandi, uno alla volta:
+
+```
+/plugin marketplace add endjneer/windows-tb-boot
+```
+
+```
+/plugin install windows-tb-boot@windows-tb-boot
+```
+
+Se apri Claude Code in un clone di questo repository non devi installare niente: la skill è già in `.claude/skills/windows-tb-boot/`.
+
+### claude.ai
+
+1. Crea lo zip. In un terminale bash (Linux, oppure Git Bash su Windows), nella cartella del repository:
+
+   ```
+   bash tools/build-skill.sh --zip
+   ```
+
+   Il file è `dist/windows-tb-boot.zip`. Senza bash: in Esplora file, clic destro sulla cartella `.claude\skills\windows-tb-boot` e *Comprimi in file ZIP*.
+2. Su claude.ai attiva l'esecuzione di codice e carica lo zip nelle impostazioni delle skill.
+
+### Codex, Gemini CLI
+
+Copia la cartella della skill in `~/.agents/skills/`. In un terminale bash, nella cartella del repository:
+
+```
+mkdir -p ~/.agents/skills && cp -r .claude/skills/windows-tb-boot ~/.agents/skills/
+```
+
+Su Windows puoi copiare con Esplora file la cartella `.claude\skills\windows-tb-boot` in `%USERPROFILE%\.agents\skills\`.
+
+### Usarla in sicurezza
+
+- L'agente non sostituisce la guida: la segue. Da solo esegue solo comandi in sola lettura. I comandi che modificano BIOS, registro, dischi o BitLocker li lanci tu, dopo che l'agente ti ha spiegato cosa cambiano.
+- Non usare modalità che approvano i comandi in automatico.
+- Non scrivere nella chat chiavi di ripristino, PIN, password, numeri di serie o il Service Tag, e coprili nelle foto dello schermo.
+
 ---
 
 ## Il problema in breve
@@ -139,26 +190,6 @@ La guida passo passo è in **[docs/guide.it.md](docs/guide.it.md)**. In sintesi:
 | 7 | Ambiente di ripristino di Windows, box in modalità USB | Riattivazione di `ThunderboltBoot` quando l'SSD sparisce dal menu F12 dopo un aggiornamento o un azzeramento del BIOS |
 
 In caso di problemi consulta [docs/troubleshooting.it.md](docs/troubleshooting.it.md). In emergenza: [docs/quick-recovery.it.md](docs/quick-recovery.it.md).
-
----
-
-## Assistente AI
-
-Il repository contiene una skill per agenti AI, `windows-tb-boot`, che ti accompagna passo passo nella procedura e nella diagnosi: capisce a che punto sei, ti porta alla sezione giusta della guida e legge con te l'output dei comandi. È pensata per qualunque notebook con un SSD in un box Thunderbolt o USB4, ma la procedura è verificata solo sull'hardware descritto in [Ambiente di test](#ambiente-di-test).
-
-| Dove | Come installarla |
-|---|---|
-| Claude Code, aperto nel clone del repository | Niente: la skill è in `.claude/skills/windows-tb-boot/` |
-| Claude Code, altrove | `/plugin marketplace add endjneer/windows-tb-boot`, poi `/plugin install windows-tb-boot@windows-tb-boot`. |
-| claude.ai | Crea lo zip con `bash tools/build-skill.sh --zip`, oppure in Esplora file con *Comprimi in file ZIP* sulla cartella `.claude/skills/windows-tb-boot`, e caricalo nelle impostazioni delle skill. Serve l'esecuzione di codice attiva |
-| Codex, Gemini CLI | Copia la cartella `.claude/skills/windows-tb-boot` in `~/.agents/skills/` |
-
-Scegli un modo solo: con il clone aperto e il plugin installato, Claude Code mostra la skill due volte.
-
-**Avvertenze**
-- L'agente non sostituisce la guida: la segue. Da solo esegue solo comandi in sola lettura. I comandi che modificano BIOS, registro, dischi o BitLocker li lanci tu, dopo che l'agente ti ha spiegato cosa cambiano.
-- Non usare modalità che approvano i comandi in automatico.
-- Non scrivere nella chat chiavi di ripristino, PIN, password, numeri di serie o il Service Tag, e coprili nelle foto dello schermo.
 
 ---
 
