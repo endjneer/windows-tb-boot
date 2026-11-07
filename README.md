@@ -100,6 +100,7 @@ The full technical explanation is in [docs/how-it-works.md](docs/how-it-works.md
 | Current versions of `repair-usb4-boot.bat /check` and `thunderbolt-boot-on.vbs /status`, with Windows running | ✅ verified on 30/10, with and without administrator rights. Without them, `ThunderboltBoot` cannot be read (access denied, as expected) |
 | Current versions of the two scripts from the Recovery Environment (`/check`, `/status`, normal mode) | ✅ verified on 30/10, encrypted drive, with the values already correct: nothing written |
 | Actual repair with the current versions (registry values, enabling `ThunderboltBoot`) | ⏳ to be verified: it can only be tried when it is really needed |
+| Write permissions on `C:\Repair` limited to administrators with `icacls` (Phase 5.1) | ⏳ to be verified |
 | Reading and writing `ThunderboltBoot` from the Recovery Environment, with WMI (`wmic` and VBScript) | ✅ verified on 30/10, with the updated BIOS |
 | Enabling `ThunderboltBoot` from the running external Windows | ⏳ to be verified |
 | Recovery Environment booted in USB mode (USB-C → USB-A cable on a USB-A port) | ✅ verified on 30/10 |

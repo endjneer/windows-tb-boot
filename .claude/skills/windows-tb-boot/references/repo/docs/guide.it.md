@@ -338,6 +338,17 @@ C:\Repair\repair-usb4-boot.bat /check
 
 `/check` è in sola lettura: mostra i tre valori del registro con l'esito e lo stato di `ThunderboltBoot`, ed esce con 0 se è tutto a posto, 2 se c'è qualcosa da correggere, 1 in caso di errore. Per il registro non servono i diritti di amministratore; per leggere `ThunderboltBoot` sì, e senza lo script lo segnala senza considerarlo un errore. Il 30/10/2026 `/check` e `/status` sono stati provati da Windows, con e senza diritti di amministratore, e in WinRE (Fase 6).
 
+**Proteggi la cartella.** Una cartella creata direttamente in `C:\` di solito può essere modificata da qualunque utente e da qualunque programma, anche senza diritti di amministratore. Questi script invece si lanciano come amministratore: chi li modifica fa eseguire i propri comandi con quei diritti. Lascia quindi la cartella modificabile solo dagli amministratori. Nel Prompt dei comandi da amministratore:
+
+```
+icacls C:\Repair /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX
+icacls C:\Repair\* /reset
+icacls C:\Repair /setowner *S-1-5-32-544 /T
+icacls C:\Repair
+```
+
+Il primo comando lascia il controllo completo solo a SYSTEM e Administrators e la lettura a Users (gli identificativi `S-1-5-…` evitano i nomi tradotti); il secondo applica gli stessi permessi ai file già copiati; il terzo rende proprietario il gruppo Administrators. L'ultimo mostra solo il risultato: devono esserci tre voci, SYSTEM e Administrators con `(F)` e Users con `(RX)`, con i nomi eventualmente tradotti. Da quel momento, copiare una versione nuova degli script chiede il permesso di amministratore. Gli script leggono soltanto dalla propria cartella, quindi `/check` dovrebbe continuare a funzionare anche senza diritti di amministratore. Non ancora verificato.
+
 ### 5.2 Rimetti al primo posto il sistema interno
 
 Alla fine del Setup, Windows registra nel firmware la propria voce *Windows Boot Manager* e la mette al primo posto. Nel menu F12 compaiono quindi due voci *Windows Boot Manager*, una per disco e indistinguibili dal nome, e l'avvio predefinito diventa il Windows esterno. Dal BIOS non si capisce quale sia quale; da Windows sì.

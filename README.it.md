@@ -100,6 +100,7 @@ La spiegazione tecnica completa è in [docs/how-it-works.it.md](docs/how-it-work
 | Versioni attuali di `repair-usb4-boot.bat /check` e `thunderbolt-boot-on.vbs /status`, con Windows avviato | ✅ verificato il 30/10, con e senza diritti di amministratore. Senza, `ThunderboltBoot` non si legge (accesso negato, come previsto) |
 | Versioni attuali dei due script dall'ambiente di ripristino (`/check`, `/status`, modalità normale) | ✅ verificato il 30/10, disco cifrato, con i valori già corretti: nessuna scrittura |
 | Correzione vera e propria con le versioni attuali (valori del registro, attivazione di `ThunderboltBoot`) | ⏳ da verificare: si prova solo quando serve davvero |
+| Permessi di scrittura su `C:\Repair` limitati agli amministratori con `icacls` (Fase 5.1) | ⏳ da verificare |
 | Lettura e scrittura di `ThunderboltBoot` dall'ambiente di ripristino, con WMI (`wmic` e VBScript) | ✅ verificato il 30/10, con il BIOS aggiornato |
 | Attivazione di `ThunderboltBoot` dal Windows esterno avviato | ⏳ da verificare |
 | Ambiente di ripristino avviato in modalità USB (cavo USB-C → USB-A su una porta USB-A) | ✅ verificato il 30/10 |
