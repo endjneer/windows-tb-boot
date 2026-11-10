@@ -112,8 +112,10 @@ La spiegazione tecnica completa è in [docs/how-it-works.it.md](docs/how-it-work
 | Installazione senza Ubuntu, dalla chiavetta di Windows con Shift+F10 (Fase 1 e punto 3.4) | ⏳ da verificare |
 | Cifratura BitLocker TPM + PIN dell'SSD esterno; sblocco con la chiave di ripristino | ✅ verificato |
 | Sblocco BitLocker dalla sessione live negli script di riparazione | ⏳ da verificare |
-| Sospensione (standby moderno, S0) | ⚠️ una ventina di cicli riusciti; un blocco non spiegato dopo una ripresa, senza schermata blu |
-| Ibernazione | ⏳ da verificare |
+| Sospensione (standby moderno, S0) | ⚠️ 187 cicli dal 5/10 al 10/11, con tre schermate blu (0xEF, 0x154) tra pochi minuti e mezz'ora dopo una ripresa. Il blocco senza schermata blu notato all'inizio è quello del 16/10, che i registri mostrano come un passaggio all'ibernazione (riga successiva). Dati e soluzioni da provare in [docs/troubleshooting.it.md](docs/troubleshooting.it.md) |
+| Ibernazione | ❌ bloccata in due tentativi su due (16/10 e 6/11), con lo schermo nero e le ventole accese fino allo spegnimento forzato |
+| Dock Thunderbolt 3 collegata insieme al box, su un'altra porta | ⚠️ dal primo collegamento (28/10): un blocco al riconoscimento del monitor della dock (2/11) e quattro schermate blu (3/11 e 10/11), due delle quali a pochi secondi dall'avvio. Causa non chiarita |
+| Soluzioni per sospensione, ibernazione e dock (problemi frequenti) | ⏳ da verificare |
 | Ambiente di ripristino di Windows avviato dall'SSD Thunderbolt, con accesso alla partizione di Windows | ✅ verificato |
 | Ripristino da un punto di ripristino | ⏳ da verificare |
 | Ubuntu installato sull'SSD esterno | ⏳ da verificare |
@@ -137,6 +139,7 @@ Se completi uno dei passaggi "da verificare", apri una issue o una pull request:
 | Box esterno | ACASIS TBU405Pro, doppio chip: Intel JHL7440 (Titan Ridge, Thunderbolt 3) + Realtek RTL9210B (USB) |
 | SSD | WD_BLACK SN850X 1 TB (NVMe Gen4) |
 | Collegamento | Porta Thunderbolt 5 del notebook, cavo Thunderbolt, collegamento a 40 Gb/s (2 × 20 Gb/s) |
+| Dock (dal 28/10/2026) | Dock Thunderbolt 3, su una porta Thunderbolt del notebook diversa da quella del box |
 | Windows | Windows 11, build 26300 (26H2), supporto creato con Rufus |
 | Ambiente Linux | Ubuntu Desktop 26.04.1 LTS in sessione live (kernel 7.0) |
 | Impostazioni BIOS invariate | Secure Boot attivo, Microsoft UEFI CA abilitata, Pre-Boot DMA attivo, archiviazione in modalità RAID/RST (Intel VMD) |

@@ -112,8 +112,10 @@ The full technical explanation is in [docs/how-it-works.md](docs/how-it-works.md
 | Installation without Ubuntu, from the Windows stick with Shift+F10 (Phase 1 and step 3.4) | ⏳ to be verified |
 | BitLocker TPM + PIN encryption of the external SSD; unlock with the recovery key | ✅ verified |
 | BitLocker unlock from the live session in the repair scripts | ⏳ to be verified |
-| Sleep (Modern Standby, S0) | ⚠️ about twenty successful cycles; one unexplained hang after a resume, with no blue screen |
-| Hibernation | ⏳ to be verified |
+| Sleep (Modern Standby, S0) | ⚠️ 187 cycles from 5/10 to 10/11, with three blue screens (0xEF, 0x154) between a few minutes and half an hour after a resume. The hang without a blue screen noticed at first is the one of 16/10, which the event logs show as a transition to hibernation (next row). Data and solutions to try in [docs/troubleshooting.md](docs/troubleshooting.md) |
+| Hibernation | ❌ hung in two attempts out of two (16/10 and 6/11), with a black screen and the fans running until forced off |
+| Thunderbolt 3 dock connected together with the enclosure, on another port | ⚠️ since it was first connected (28/10): a hang when the dock's monitor was recognized (2/11) and four blue screens (3/11 and 10/11), two of them a few seconds after boot. Cause not established |
+| Solutions for sleep, hibernation and the dock (troubleshooting) | ⏳ to be verified |
 | Windows Recovery Environment booted from the Thunderbolt SSD, with access to the Windows partition | ✅ verified |
 | Recovery from a restore point | ⏳ to be verified |
 | Ubuntu installed on the external SSD | ⏳ to be verified |
@@ -137,6 +139,7 @@ If you complete one of the "to be verified" steps, open an issue or a pull reque
 | External enclosure | ACASIS TBU405Pro, dual chip: Intel JHL7440 (Titan Ridge, Thunderbolt 3) + Realtek RTL9210B (USB) |
 | SSD | WD_BLACK SN850X 1 TB (NVMe Gen4) |
 | Connection | Thunderbolt 5 port of the notebook, Thunderbolt cable, 40 Gb/s link (2 × 20 Gb/s) |
+| Dock (since 28/10/2026) | Thunderbolt 3 dock, on a different Thunderbolt port of the notebook from the enclosure's |
 | Windows | Windows 11, build 26300 (26H2), media created with Rufus |
 | Linux environment | Ubuntu Desktop 26.04.1 LTS in a live session (kernel 7.0) |
 | Unchanged BIOS settings | Secure Boot on, Microsoft UEFI CA enabled, Pre-Boot DMA on, storage in RAID/RST mode (Intel VMD) |

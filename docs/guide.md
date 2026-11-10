@@ -609,7 +609,9 @@ Save **both the ID and the numerical password**. The password is the actual key.
 
 ### 5.7 Sleep
 
-It has not been verified yet whether the Thunderbolt link survives sleep and hibernation. Until you have tested it calmly, shut the PC down instead of putting it to sleep.
+On the notebook used in testing the firmware supports only Modern Standby (S0). From 5/10 to 10/11/2026 standby worked almost always, over 187 cycles, but there were three blue screens shortly after a resume. Hibernation hung in two attempts out of two, with a black screen and the fans running. A probable cause, not verified, is the link between the enclosure's chip and the SSD, which logs PCIe errors even in normal operation. Data, read-only checks and solutions to try are in [troubleshooting.md](troubleshooting.md), under *After sleep the screen stays black and the fans keep running*.
+
+Until you have a stable configuration, shut the PC down instead of putting it to sleep. If you use a Thunderbolt dock, see also *With a Thunderbolt dock connected Windows hangs or shows a blue screen*.
 
 ### 5.8 Restore points
 

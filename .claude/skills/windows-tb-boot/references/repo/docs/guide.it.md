@@ -609,7 +609,9 @@ Salva **sia l'ID sia la password numerica**. La password è la chiave vera e pro
 
 ### 5.7 Sospensione
 
-Non è ancora stato verificato se il collegamento Thunderbolt sopravvive alla sospensione e all'ibernazione. Finché non l'hai provato con calma, spegni il PC invece di sospenderlo.
+Sul notebook dei test il firmware supporta solo lo standby moderno (S0). Dal 5/10 al 10/11/2026 lo standby ha funzionato quasi sempre, in 187 cicli, ma ci sono state tre schermate blu poco dopo una ripresa. L'ibernazione si è bloccata in due tentativi su due, con lo schermo nero e le ventole accese. Una causa probabile, non verificata, è il collegamento tra il chip del box e l'SSD, che registra errori PCIe anche nel normale funzionamento. Dati, controlli in sola lettura e soluzioni da provare sono in [troubleshooting.it.md](troubleshooting.it.md), alla voce *Dopo la sospensione lo schermo resta nero e le ventole girano*.
+
+Finché non hai una configurazione stabile, spegni il PC invece di sospenderlo. Se usi una dock Thunderbolt, vedi anche la voce *Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu*.
 
 ### 5.8 Punti di ripristino
 
