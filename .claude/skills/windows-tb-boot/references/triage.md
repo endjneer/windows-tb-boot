@@ -40,6 +40,8 @@ Find the row that matches where the user is and what they see, then open the sec
 | Prevent Windows updates from breaking the boot | guide §5.9 (`Usb4BootGuard`, not verified with a real update) |
 | Stop Dell software from updating the BIOS | guide §5.10 |
 | Before a Windows or BIOS update | the everyday rules at the end of the guide; scripts in `C:\Repair\` and recovery key at hand |
+| Black screen after sleep with the fans running, a blue screen shortly after a resume, or a hang while hibernating | troubleshooting, "After sleep the screen stays black and the fans keep running"; guide §5.7. Solutions not verified |
+| Hangs or blue screens with a Thunderbolt dock connected | troubleshooting, "With a Thunderbolt dock connected Windows hangs or shows a blue screen". Not verified |
 
 ## Other hardware
 

@@ -18,6 +18,7 @@ In Claude Code on Windows the shell is usually Git Bash, which rewrites argument
 - `wmic /namespace:\\root\dcim\sysman\biosattributes path EnumerationAttribute where "AttributeName='ThunderboltBoot'" get AttributeName,CurrentValue`
 - `schtasks /query …`, `winget list`
 - in *PowerShell*: `Get-PnpDevice …`, `windows\show-disk-paths.ps1`, `windows\usb4-boot-guard\usb4-boot-guard.ps1 -Status`
+- in *PowerShell*, for sleep and hibernation problems: `powercfg /a`, `powercfg /q …`, and the `Get-WinEvent` queries of troubleshooting, "After sleep the screen stays black and the fans keep running". The `powercfg` commands that change settings (`/hibernate`, `/setacvalueindex`, `/setdcvalueindex`, `/setactive`) are for the user
 
 **Ubuntu live session:**
 - `./scripts/check-bios.sh`
