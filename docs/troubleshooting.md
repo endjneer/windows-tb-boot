@@ -273,3 +273,86 @@ The same applies if `thunderbolt-boot-on.vbs` says so. Your model's firmware doe
 ### `check-bios.sh` says that a BIOS administrator password is set
 
 Without that password the attributes cannot be changed. If you do not know it, ask whoever manages the PC: do not try to bypass it.
+
+---
+
+### After sleep the screen stays black and the fans keep running
+
+The notebook does not come out of sleep: the fans spin, the screen stays black, and it only turns off by holding the power button. In other cases Windows resumes, but shortly afterwards stops with a `CRITICAL_PROCESS_DIED` (0xEF) or `UNEXPECTED_STORE_EXCEPTION` (0x154) blue screen.
+
+**What was observed** on the notebook used in testing, from 5/10 to 10/11/2026, in the Windows event logs:
+- the firmware supports only Modern Standby (S0). Classic standby (S3) is not available, so it is not an alternative;
+- 187 Modern Standby cycles, with three blue screens between a few minutes and half an hour after a resume (0xEF on 15/10, 0x154 on 23/10 and 26/10);
+- hibernation **hung in two attempts out of two** (16/10 and 6/11). Both times Windows left standby to go into hibernation (reason *Sleep, Hibernate, or Shutdown* of event 507) and stopped there, with a black screen and the fans running, until it was forced off. The following event 41 reports `SleepInProgress = 5`, that is, a transition to hibernation in progress. On 6/11 the notebook was on battery, and the transition started by itself because standby was using too much power (*Austerity Battery Drain Budget Exceeded*);
+- about 2,500 corrected PCIe errors in 30 days (WHEA-Logger event 17), almost all on the port of the enclosure's Thunderbolt chip that the SSD is connected to. They are mostly *Bad TLP*, that is, packets that arrived corrupted and were retransmitted: they concern the PCIe link inside the enclosure, between the chip and the SSD, not the cable;
+- all of this was already happening before a Thunderbolt dock was connected for the first time, on 28/10. For the problems with the dock, see the next entry.
+
+**Probable cause, not verified.** Windows runs from the SSD in the enclosure, and the paging file and the hibernation file are there too. In standby Windows puts the PCIe and Thunderbolt links to rest. If at resume the link to the SSD is not reliable straight away, Windows cannot read back the memory it had moved to disk and stops: black screen, or blue screen. For the 0xEF blue screens no dump file was ever written, as happens when the system drive does not respond. Hibernation is the most delicate case: Windows has to write all of memory to the external SSD.
+
+**Read-only checks**, in *PowerShell* (no administrator rights needed).
+
+Sleep states supported by the firmware:
+
+```
+powercfg /a
+```
+
+Restarts without a clean shutdown (event 41). `BugcheckCode` is the blue screen code, `0x0` if the notebook was turned off with the power button; `SleepInProgress = 5` means a transition to hibernation was in progress:
+
+```
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=41} | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; [pscustomobject]@{ Time = $_.TimeCreated; BugcheckCode = '0x{0:X}' -f [int64]$d.BugcheckCode; SleepInProgress = $d.SleepInProgress } }
+```
+
+The last 40 Modern Standby entries and exits, with the reason (events 506 and 507):
+
+```
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=506,507} -MaxEvents 40 | Format-Table TimeCreated, Id, Message -Wrap
+```
+
+Corrected PCIe errors of the last 30 days, by device. If it prints nothing, there are none:
+
+```
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-WHEA-Logger'; Id=17; StartTime=(Get-Date).AddDays(-30)} -ErrorAction SilentlyContinue | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; $d['PrimaryDeviceName'] } | Group-Object | Sort-Object Count -Descending | Format-Table Count, Name -AutoSize
+```
+
+Compare the names with the output of `windows\show-disk-paths.ps1`: if the device with the most errors appears on the SSD's path, the errors concern the link to the system drive. The outputs contain your hardware IDs: in an issue, report the counts, not the IDs.
+
+**What to try, not verified.** One change at a time, noting the hangs and the number of PCIe errors for a few days:
+1. **When the screen stays black**, before turning off try **Win + Ctrl + Shift + B**, which restarts the graphics driver. If the screen comes back, the hang was only graphical. If nothing happens, Windows is stuck: hold the power button.
+2. **Turn hibernation off**, in the *Command Prompt as administrator*:
+
+   ```
+   powercfg /hibernate off
+   ```
+
+   Windows no longer moves from standby to hibernation, the transition that hung in testing. With the battery almost empty the notebook should shut down instead of hibernating: save your work before leaving it on battery. To undo: `powercfg /hibernate on`.
+3. **Turn off PCIe link power saving** (*Link State Power Management*, in the *PCI Express* group of the power options), in the *Command Prompt as administrator*:
+
+   ```
+   powercfg /setacvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
+   powercfg /setdcvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
+   powercfg /setactive SCHEME_CURRENT
+   ```
+
+   On the notebook used in testing it was set to *Maximum power savings* (value 2), both on AC and on battery. For a link with errors, the transitions into and out of power saving are the most delicate moment. Power use in standby may increase. The current value can be read with `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. To undo, repeat the first two commands with `2` instead of `0`, then the third.
+4. **Check the SSD in the enclosure**, with the PC off and the enclosure disconnected: that it is seated properly in the M.2 slot and cooled as the enclosure intends. *Bad TLP* errors on the link between the chip and the SSD can also come from a contact or from temperature.
+5. Until you find a stable configuration, **shut down instead of sleeping** (guide, step 5.7). In the power options you can set closing the lid to *Shut down*.
+
+---
+
+### With a Thunderbolt dock connected Windows hangs or shows a blue screen
+
+On the notebook used in testing a Thunderbolt 3 dock was connected for the first time on 28/10/2026, to a different Thunderbolt port from the enclosure's. Since then, in the Windows event logs:
+- 2/11: a hang at the moment Windows recognized the monitor connected to the dock, with an automatic dump of the USB driver (`BUGCODE_USB3_DRIVER`, 0x144);
+- 3/11: three blue screens in one hour (0x1000007E and two 0xEF), two of them a few seconds after boot. At least for the first one the dock was connected;
+- 10/11: one 0xEF blue screen during normal use, with the dock connected.
+
+According to the person who ran the tests, without the dock these hangs at boot do not happen.
+
+**Cause not established.** On the notebook used in testing the dock and the enclosure depend on the same Thunderbolt controller of the notebook. With this guide's fix the USB4 drivers start with Windows (`Start = 0`), so the dock is handled from the earliest stages of boot, together with the system drive. A problem with the dock could therefore also affect the link to the SSD: this is a hypothesis, not verified.
+
+**What to try, not verified:**
+1. **Connect the enclosure directly to the notebook**, never to the dock: it is the system drive.
+2. **Power on without the dock** and connect it only after signing in to Windows. Note whether the hangs at boot go away.
+3. **Update the dock's firmware** with the manufacturer's tool. It does not concern the notebook's BIOS, but it has not been tried in this configuration.
+4. If the problems remain, a USB-C dock **without Thunderbolt** (USB and DisplayPort only, no PCIe tunnel) might avoid them.

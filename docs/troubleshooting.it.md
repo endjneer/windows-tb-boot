@@ -273,3 +273,86 @@ Lo stesso vale se lo dice `thunderbolt-boot-on.vbs`. Il firmware del tuo modello
 ### `check-bios.sh` dice che è attiva una password di amministratore del BIOS
 
 Senza quella password non si possono modificare gli attributi. Se non la conosci, chiedila a chi gestisce il PC: non tentare di aggirarla.
+
+---
+
+### Dopo la sospensione lo schermo resta nero e le ventole girano
+
+Il notebook non esce dalla sospensione: le ventole girano, lo schermo resta nero, e si spegne solo tenendo premuto il pulsante di accensione. In altri casi Windows riparte, ma poco dopo va in schermata blu `CRITICAL_PROCESS_DIED` (0xEF) o `UNEXPECTED_STORE_EXCEPTION` (0x154).
+
+**Cosa è stato osservato** sul notebook dei test, dal 5/10 al 10/11/2026, nei registri di Windows:
+- il firmware supporta solo lo standby moderno (S0). Lo standby classico (S3) non c'è, quindi non è un'alternativa;
+- 187 cicli di standby moderno, con tre schermate blu tra pochi minuti e mezz'ora dopo una ripresa (0xEF il 15/10, 0x154 il 23/10 e il 26/10);
+- ibernazione **bloccata in due tentativi su due** (16/10 e 6/11). Entrambe le volte Windows è uscito dallo standby per passare all'ibernazione (motivo *Sleep, Hibernate, or Shutdown* dell'evento 507) e si è fermato lì, con lo schermo nero e le ventole accese, fino allo spegnimento forzato. L'evento 41 successivo riporta `SleepInProgress = 5`, cioè un passaggio all'ibernazione in corso. Il 6/11 il notebook era a batteria, e il passaggio è partito da solo perché lo standby consumava troppo (*Austerity Battery Drain Budget Exceeded*);
+- circa 2.500 errori PCIe corretti in 30 giorni (evento 17 di WHEA-Logger), quasi tutti sulla porta del chip Thunderbolt del box a cui è collegato l'SSD. Sono soprattutto *Bad TLP*, cioè pacchetti arrivati corrotti e ritrasmessi: riguardano il collegamento PCIe dentro il box, tra il chip e l'SSD, non il cavo;
+- tutto questo c'era già prima del primo collegamento di una dock Thunderbolt, il 28/10. Per i problemi con la dock vedi la voce successiva.
+
+**Causa probabile, non verificata.** Windows gira dall'SSD del box, e lì ci sono anche il file di paging e quello di ibernazione. In standby Windows mette a riposo i collegamenti PCIe e Thunderbolt. Se alla ripresa il collegamento con l'SSD non torna subito affidabile, Windows non riesce a rileggere la memoria che aveva spostato sul disco e si ferma: schermo nero, oppure schermata blu. Per le schermate blu 0xEF non è mai stato scritto un file di dump, come succede quando il disco di sistema non risponde. L'ibernazione è il caso più delicato: Windows deve scrivere tutta la memoria sull'SSD esterno.
+
+**Controlli in sola lettura**, in *PowerShell* (non servono i diritti di amministratore).
+
+Stati di sospensione supportati dal firmware:
+
+```
+powercfg /a
+```
+
+Riavvii senza un regolare arresto (evento 41). `BugcheckCode` è il codice della schermata blu, `0x0` se il notebook è stato spento con il pulsante; `SleepInProgress = 5` indica un passaggio all'ibernazione in corso:
+
+```
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=41} | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; [pscustomobject]@{ Ora = $_.TimeCreated; BugcheckCode = '0x{0:X}' -f [int64]$d.BugcheckCode; SleepInProgress = $d.SleepInProgress } }
+```
+
+Le ultime 40 entrate e uscite dallo standby moderno, con il motivo (eventi 506 e 507):
+
+```
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=506,507} -MaxEvents 40 | Format-Table TimeCreated, Id, Message -Wrap
+```
+
+Errori PCIe corretti degli ultimi 30 giorni, per dispositivo. Se non stampa nulla, non ce ne sono:
+
+```
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-WHEA-Logger'; Id=17; StartTime=(Get-Date).AddDays(-30)} -ErrorAction SilentlyContinue | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; $d['PrimaryDeviceName'] } | Group-Object | Sort-Object Count -Descending | Format-Table Count, Name -AutoSize
+```
+
+Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositivo con più errori compare sul percorso dell'SSD, gli errori riguardano il collegamento con il disco di sistema. Gli output contengono gli ID del tuo hardware: in una issue riporta i conteggi, non gli ID.
+
+**Cosa provare, non verificato.** Una modifica per volta, annotando per qualche giorno i blocchi e il numero di errori PCIe:
+1. **Quando lo schermo resta nero**, prima di spegnere prova **Win + Ctrl + Maiusc + B**, che riavvia il driver video. Se lo schermo torna, il blocco era solo grafico. Se non succede nulla, Windows è fermo: tieni premuto il pulsante di accensione.
+2. **Disattiva l'ibernazione**, nel *Prompt dei comandi come amministratore*:
+
+   ```
+   powercfg /hibernate off
+   ```
+
+   Windows non passa più dallo standby all'ibernazione, cioè il passaggio che nei test si è bloccato. Con la batteria quasi scarica il notebook dovrebbe spegnersi invece di ibernarsi: salva il lavoro prima di lasciarlo a batteria. Per tornare indietro: `powercfg /hibernate on`.
+3. **Disattiva il risparmio energetico dei collegamenti PCIe** (*Risparmio energia stato collegamento*, nel gruppo *PCI Express* delle opzioni risparmio energia), nel *Prompt dei comandi come amministratore*:
+
+   ```
+   powercfg /setacvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
+   powercfg /setdcvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
+   powercfg /setactive SCHEME_CURRENT
+   ```
+
+   Sul notebook dei test era su *Risparmio energia massimo* (valore 2), sia a corrente sia a batteria. Per un collegamento con errori, i passaggi da e verso il risparmio energetico sono il momento più delicato. In standby il consumo potrebbe aumentare. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. Per tornare indietro ripeti i primi due comandi con `2` al posto di `0`, poi il terzo.
+4. **Controlla l'SSD nel box**, a PC spento e box scollegato: che sia inserito bene nello slot M.2 e raffreddato come previsto dal box. Gli errori *Bad TLP* sul collegamento tra il chip e l'SSD possono dipendere anche da un contatto o dalla temperatura.
+5. Finché non trovi una configurazione stabile, **spegni invece di sospendere** (guida, punto 5.7). Nelle opzioni risparmio energia puoi impostare la chiusura del coperchio su *Arresta il sistema*.
+
+---
+
+### Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu
+
+Sul notebook dei test una dock Thunderbolt 3 è stata collegata per la prima volta il 28/10/2026, su una porta Thunderbolt diversa da quella del box. Da allora, nei registri di Windows:
+- 2/11: blocco nel momento in cui Windows ha riconosciuto il monitor collegato alla dock, con un dump automatico del driver USB (`BUGCODE_USB3_DRIVER`, 0x144);
+- 3/11: tre schermate blu in un'ora (0x1000007E e due 0xEF), due delle quali a pochi secondi dall'avvio. Almeno alla prima la dock era collegata;
+- 10/11: una schermata blu 0xEF durante il normale uso, con la dock collegata.
+
+Secondo chi ha fatto i test, senza la dock questi blocchi all'avvio non si presentano.
+
+**Causa non chiarita.** Sul notebook dei test dock e box dipendono dallo stesso controller Thunderbolt del notebook. Con la correzione di questa guida i driver USB4 partono con Windows (`Start = 0`), quindi la dock viene gestita fin dalle prime fasi dell'avvio, insieme al disco di sistema. Un problema della dock potrebbe così coinvolgere anche il collegamento con l'SSD: è un'ipotesi, non verificata.
+
+**Cosa provare, non verificato:**
+1. **Collega il box direttamente al notebook**, mai alla dock: è il disco di sistema.
+2. **Accendi senza la dock** e collegala solo dopo l'accesso a Windows. Annota se i blocchi all'avvio spariscono.
+3. **Aggiorna il firmware della dock** con lo strumento del produttore. Non riguarda il BIOS del notebook, ma in questa configurazione non è stato provato.
+4. Se i problemi restano, una dock USB-C **senza Thunderbolt** (solo USB e DisplayPort, senza tunnel PCIe) potrebbe evitarli.
