@@ -287,7 +287,7 @@ The notebook does not come out of sleep: the fans spin, the screen stays black, 
 - about 2,500 corrected PCIe errors in 30 days (WHEA-Logger event 17), almost all on the port of the enclosure's Thunderbolt chip that the SSD is connected to. They are mostly *Bad TLP*, that is, packets that arrived corrupted and were retransmitted: they concern the PCIe link inside the enclosure, between the chip and the SSD, not the cable;
 - all of this was already happening before a Thunderbolt dock was connected for the first time, on 28/10. For the problems with the dock, see the next entry.
 
-**Probable cause, not verified.** Windows runs from the SSD in the enclosure, and the paging file and the hibernation file are there too. In standby Windows puts the PCIe and Thunderbolt links to rest. If at resume the link to the SSD is not reliable straight away, Windows cannot read back the memory it had moved to disk and stops: black screen, or blue screen. For the 0xEF blue screens no dump file was ever written, as happens when the system drive does not respond. Hibernation is the most delicate case: Windows has to write all of memory to the external SSD.
+**Probable cause, not verified.** Windows runs from the SSD in the enclosure, and the paging file and the hibernation file are there too. In standby Windows puts the PCIe and Thunderbolt links to rest. If at resume the link to the SSD is not reliable straight away, Windows cannot read back the memory it had moved to disk and stops: black screen, or blue screen. For the 0xEF blue screens no dump file was ever written, as happens when the system drive does not respond (next entry). Hibernation is the most delicate case: Windows has to write all of memory to the external SSD.
 
 **Read-only checks**, in *PowerShell* (no administrator rights needed).
 
@@ -318,15 +318,16 @@ Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Window
 Compare the names with the output of `windows\show-disk-paths.ps1`: if the device with the most errors appears on the SSD's path, the errors concern the link to the system drive. The outputs contain your hardware IDs: in an issue, report the counts, not the IDs.
 
 **What to try, not verified.** One change at a time, noting the hangs and the number of PCIe errors for a few days:
-1. **When the screen stays black**, before turning off try **Win + Ctrl + Shift + B**, which restarts the graphics driver. If the screen comes back, the hang was only graphical. If nothing happens, Windows is stuck: hold the power button.
-2. **Turn hibernation off**, in the *Command Prompt as administrator*:
+1. **When the screen stays black**, try **Win + Ctrl + Shift + B**, which restarts the graphics driver: if the screen comes back, the hang was only graphical. On the notebook used in testing, on 10/11, it had no effect: Windows had already stopped with a blue screen without managing to write the dump (next entry). In that case hold the power button.
+2. **Turn off writing the dump**, as described in the next entry: after a blue screen Windows should restart by itself, instead of staying stuck with a black screen.
+3. **Turn hibernation off**, in the *Command Prompt as administrator*:
 
    ```
    powercfg /hibernate off
    ```
 
    Windows no longer moves from standby to hibernation, the transition that hung in testing. With the battery almost empty the notebook should shut down instead of hibernating: save your work before leaving it on battery. To undo: `powercfg /hibernate on`.
-3. **Turn off PCIe link power saving** (*Link State Power Management*, in the *PCI Express* group of the power options), in the *Command Prompt as administrator*:
+4. **Turn off PCIe link power saving** (*Link State Power Management*, in the *PCI Express* group of the power options), in the *Command Prompt as administrator*:
 
    ```
    powercfg /setacvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
@@ -335,8 +336,41 @@ Compare the names with the output of `windows\show-disk-paths.ps1`: if the devic
    ```
 
    On the notebook used in testing it was set to *Maximum power savings* (value 2), both on AC and on battery. For a link with errors, the transitions into and out of power saving are the most delicate moment. Power use in standby may increase. The current value can be read with `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. To undo, repeat the first two commands with `2` instead of `0`, then the third.
-4. **Check the SSD in the enclosure**, with the PC off and the enclosure disconnected: that it is seated properly in the M.2 slot and cooled as the enclosure intends. *Bad TLP* errors on the link between the chip and the SSD can also come from a contact or from temperature.
-5. Until you find a stable configuration, **shut down instead of sleeping** (guide, step 5.7). In the power options you can set closing the lid to *Shut down*.
+5. **Check the SSD in the enclosure**, with the PC off and the enclosure disconnected: that it is seated properly in the M.2 slot and cooled as the enclosure intends. *Bad TLP* errors on the link between the chip and the SSD can also come from a contact or from temperature.
+6. Until you find a stable configuration, **shut down instead of sleeping** (guide, step 5.7). In the power options you can set closing the lid to *Shut down*.
+
+---
+
+### The screen stays black, the fans spin and Windows does not restart by itself
+
+Windows stopped with a blue screen, but cannot write the dump file and stays stuck instead of restarting. The screen stays black with the fans running, and the only way out is holding the power button. It can happen after sleep, but also during normal use. **Win + Ctrl + Shift + B does not help:** it restarts the graphics driver, but Windows has already stopped.
+
+**How to recognize it**, after the restart, in *PowerShell* (no administrator rights needed):
+- event 41 has a `BugcheckCode` other than `0x0`, even though you turned the notebook off with the power button. The command is in the previous entry;
+- at the next boot there is volmgr event 161, *Dump file creation failed*:
+
+  ```
+  Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='volmgr'; Id=161} -MaxEvents 10 -ErrorAction SilentlyContinue | Format-Table TimeCreated, Message -Wrap
+  ```
+
+- event 6008 reports the time of Windows' last sign of life, that is, roughly the time of the hang. Usually the log contains nothing after that time:
+
+  ```
+  Get-WinEvent -FilterHashtable @{LogName='System'; Id=6008} -MaxEvents 10 | Format-Table TimeCreated, Message -Wrap
+  ```
+
+**What was observed** on the notebook used in testing:
+- on 10/11/2026, with the Thunderbolt dock connected and no sleep, two `CRITICAL_PROCESS_DIED` (0xEF) blue screens, at 12:32 and at 13:11. Both times the notebook stayed with a black screen and the fans running until it was turned off with the power button, the second time for an hour and a half. Win + Ctrl + Shift + B had no effect. Automatic restart after a blue screen was enabled;
+- of the 12 restarts without a clean shutdown from 5/10 to 10/11, 8 have event 161: all the 0xEF ones (five), one 0x154 and the two hangs during hibernation. In two other cases (0x154 on 26/10, 0x1000007E on 3/11) the dump was written: writing to the external SSD therefore works, when the link is there.
+
+**Probable cause, not verified.** The dump has to be written to the system drive, that is, to the external SSD. If Windows stopped with a blue screen precisely because it can no longer reach the SSD, it cannot write the dump there either, and stays stuck. The hibernation file is written with the same mechanism as the dump: that is probably why event 161 also appears in the two hangs during hibernation.
+
+**What to try, not verified.** Turn off writing the dump: after a blue screen Windows should restart by itself.
+1. Press **Win + R**, type `sysdm.cpl` and press Enter. An administrator account is needed.
+2. Open the **Advanced** tab, then **Startup and Recovery** → **Settings**.
+3. Note the current option of *Write debugging information*, then choose **(none)**. Leave *Automatically restart* on.
+
+The current value can be read, read-only, in the *Command Prompt* (no administrator rights needed): `reg query HKLM\SYSTEM\CurrentControlSet\Control\CrashControl /v CrashDumpEnabled`. `0x0` means no dump; on the notebook used in testing it was `0x3`. You do not lose much, because in these hangs the dump is not written anyway. The blue screen code might no longer be logged, though: note the date and time of the hangs. To undo, set the option you noted back.
 
 ---
 
@@ -345,7 +379,7 @@ Compare the names with the output of `windows\show-disk-paths.ps1`: if the devic
 On the notebook used in testing a Thunderbolt 3 dock was connected for the first time on 28/10/2026, to a different Thunderbolt port from the enclosure's. Since then, in the Windows event logs:
 - 2/11: a hang at the moment Windows recognized the monitor connected to the dock, with an automatic dump of the USB driver (`BUGCODE_USB3_DRIVER`, 0x144);
 - 3/11: three blue screens in one hour (0x1000007E and two 0xEF), two of them a few seconds after boot. At least for the first one the dock was connected;
-- 10/11: one 0xEF blue screen during normal use, with the dock connected.
+- 10/11: two 0xEF blue screens during normal use (12:32 and 13:11), with the dock connected. Both times Windows stayed stuck with a black screen, without restarting (previous entry).
 
 According to the person who ran the tests, without the dock these hangs at boot do not happen.
 

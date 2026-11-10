@@ -114,8 +114,9 @@ La spiegazione tecnica completa è in [docs/how-it-works.it.md](docs/how-it-work
 | Sblocco BitLocker dalla sessione live negli script di riparazione | ⏳ da verificare |
 | Sospensione (standby moderno, S0) | ⚠️ 187 cicli dal 5/10 al 10/11, con tre schermate blu (0xEF, 0x154) tra pochi minuti e mezz'ora dopo una ripresa. Il blocco senza schermata blu notato all'inizio è quello del 16/10, che i registri mostrano come un passaggio all'ibernazione (riga successiva). Dati e soluzioni da provare in [docs/troubleshooting.it.md](docs/troubleshooting.it.md) |
 | Ibernazione | ❌ bloccata in due tentativi su due (16/10 e 6/11), con lo schermo nero e le ventole accese fino allo spegnimento forzato |
-| Dock Thunderbolt 3 collegata insieme al box, su un'altra porta | ⚠️ dal primo collegamento (28/10): un blocco al riconoscimento del monitor della dock (2/11) e quattro schermate blu (3/11 e 10/11), due delle quali a pochi secondi dall'avvio. Causa non chiarita |
-| Soluzioni per sospensione, ibernazione e dock (problemi frequenti) | ⏳ da verificare |
+| Dock Thunderbolt 3 collegata insieme al box, su un'altra porta | ⚠️ dal primo collegamento (28/10): un blocco al riconoscimento del monitor della dock (2/11) e cinque schermate blu (3/11 e 10/11), due a pochi secondi dall'avvio e due rimaste ferme con lo schermo nero fino allo spegnimento con il pulsante. Causa non chiarita |
+| Win + Ctrl + Maiusc + B durante un blocco con lo schermo nero | ❌ nessun effetto (10/11): Windows era già andato in schermata blu, senza riuscire a scrivere il dump |
+| Soluzioni per sospensione, ibernazione e dock, e riavvio automatico con il dump disattivato (problemi frequenti) | ⏳ da verificare |
 | Ambiente di ripristino di Windows avviato dall'SSD Thunderbolt, con accesso alla partizione di Windows | ✅ verificato |
 | Ripristino da un punto di ripristino | ⏳ da verificare |
 | Ubuntu installato sull'SSD esterno | ⏳ da verificare |

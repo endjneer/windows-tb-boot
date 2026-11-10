@@ -287,7 +287,7 @@ Il notebook non esce dalla sospensione: le ventole girano, lo schermo resta nero
 - circa 2.500 errori PCIe corretti in 30 giorni (evento 17 di WHEA-Logger), quasi tutti sulla porta del chip Thunderbolt del box a cui è collegato l'SSD. Sono soprattutto *Bad TLP*, cioè pacchetti arrivati corrotti e ritrasmessi: riguardano il collegamento PCIe dentro il box, tra il chip e l'SSD, non il cavo;
 - tutto questo c'era già prima del primo collegamento di una dock Thunderbolt, il 28/10. Per i problemi con la dock vedi la voce successiva.
 
-**Causa probabile, non verificata.** Windows gira dall'SSD del box, e lì ci sono anche il file di paging e quello di ibernazione. In standby Windows mette a riposo i collegamenti PCIe e Thunderbolt. Se alla ripresa il collegamento con l'SSD non torna subito affidabile, Windows non riesce a rileggere la memoria che aveva spostato sul disco e si ferma: schermo nero, oppure schermata blu. Per le schermate blu 0xEF non è mai stato scritto un file di dump, come succede quando il disco di sistema non risponde. L'ibernazione è il caso più delicato: Windows deve scrivere tutta la memoria sull'SSD esterno.
+**Causa probabile, non verificata.** Windows gira dall'SSD del box, e lì ci sono anche il file di paging e quello di ibernazione. In standby Windows mette a riposo i collegamenti PCIe e Thunderbolt. Se alla ripresa il collegamento con l'SSD non torna subito affidabile, Windows non riesce a rileggere la memoria che aveva spostato sul disco e si ferma: schermo nero, oppure schermata blu. Per le schermate blu 0xEF non è mai stato scritto un file di dump, come succede quando il disco di sistema non risponde (voce successiva). L'ibernazione è il caso più delicato: Windows deve scrivere tutta la memoria sull'SSD esterno.
 
 **Controlli in sola lettura**, in *PowerShell* (non servono i diritti di amministratore).
 
@@ -318,15 +318,16 @@ Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Window
 Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositivo con più errori compare sul percorso dell'SSD, gli errori riguardano il collegamento con il disco di sistema. Gli output contengono gli ID del tuo hardware: in una issue riporta i conteggi, non gli ID.
 
 **Cosa provare, non verificato.** Una modifica per volta, annotando per qualche giorno i blocchi e il numero di errori PCIe:
-1. **Quando lo schermo resta nero**, prima di spegnere prova **Win + Ctrl + Maiusc + B**, che riavvia il driver video. Se lo schermo torna, il blocco era solo grafico. Se non succede nulla, Windows è fermo: tieni premuto il pulsante di accensione.
-2. **Disattiva l'ibernazione**, nel *Prompt dei comandi come amministratore*:
+1. **Quando lo schermo resta nero**, prova **Win + Ctrl + Maiusc + B**, che riavvia il driver video: se lo schermo torna, il blocco era solo grafico. Sul notebook dei test, il 10/11, non ha avuto effetto: Windows era già andato in schermata blu senza riuscire a scrivere il dump (voce successiva). In quel caso tieni premuto il pulsante di accensione.
+2. **Disattiva la scrittura del dump**, come descritto nella voce successiva: dopo una schermata blu Windows dovrebbe riavviarsi da solo, invece di restare fermo con lo schermo nero.
+3. **Disattiva l'ibernazione**, nel *Prompt dei comandi come amministratore*:
 
    ```
    powercfg /hibernate off
    ```
 
    Windows non passa più dallo standby all'ibernazione, cioè il passaggio che nei test si è bloccato. Con la batteria quasi scarica il notebook dovrebbe spegnersi invece di ibernarsi: salva il lavoro prima di lasciarlo a batteria. Per tornare indietro: `powercfg /hibernate on`.
-3. **Disattiva il risparmio energetico dei collegamenti PCIe** (*Risparmio energia stato collegamento*, nel gruppo *PCI Express* delle opzioni risparmio energia), nel *Prompt dei comandi come amministratore*:
+4. **Disattiva il risparmio energetico dei collegamenti PCIe** (*Risparmio energia stato collegamento*, nel gruppo *PCI Express* delle opzioni risparmio energia), nel *Prompt dei comandi come amministratore*:
 
    ```
    powercfg /setacvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
@@ -335,8 +336,41 @@ Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositiv
    ```
 
    Sul notebook dei test era su *Risparmio energia massimo* (valore 2), sia a corrente sia a batteria. Per un collegamento con errori, i passaggi da e verso il risparmio energetico sono il momento più delicato. In standby il consumo potrebbe aumentare. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. Per tornare indietro ripeti i primi due comandi con `2` al posto di `0`, poi il terzo.
-4. **Controlla l'SSD nel box**, a PC spento e box scollegato: che sia inserito bene nello slot M.2 e raffreddato come previsto dal box. Gli errori *Bad TLP* sul collegamento tra il chip e l'SSD possono dipendere anche da un contatto o dalla temperatura.
-5. Finché non trovi una configurazione stabile, **spegni invece di sospendere** (guida, punto 5.7). Nelle opzioni risparmio energia puoi impostare la chiusura del coperchio su *Arresta il sistema*.
+5. **Controlla l'SSD nel box**, a PC spento e box scollegato: che sia inserito bene nello slot M.2 e raffreddato come previsto dal box. Gli errori *Bad TLP* sul collegamento tra il chip e l'SSD possono dipendere anche da un contatto o dalla temperatura.
+6. Finché non trovi una configurazione stabile, **spegni invece di sospendere** (guida, punto 5.7). Nelle opzioni risparmio energia puoi impostare la chiusura del coperchio su *Arresta il sistema*.
+
+---
+
+### Lo schermo resta nero, le ventole girano e Windows non si riavvia da solo
+
+Windows è andato in schermata blu, ma non riesce a scrivere il file di dump e resta fermo invece di riavviarsi. Lo schermo resta nero con le ventole accese, e si esce solo tenendo premuto il pulsante di accensione. Può succedere dopo una sospensione, ma anche durante il normale uso. **Win + Ctrl + Maiusc + B non serve:** riavvia il driver video, ma Windows è già fermo.
+
+**Come riconoscerlo**, dopo il riavvio, in *PowerShell* (non servono i diritti di amministratore):
+- l'evento 41 ha un `BugcheckCode` diverso da `0x0`, anche se hai spento con il pulsante. Il comando è nella voce precedente;
+- all'avvio successivo c'è l'evento 161 di volmgr, *La creazione del file di dump non è riuscita*:
+
+  ```
+  Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='volmgr'; Id=161} -MaxEvents 10 -ErrorAction SilentlyContinue | Format-Table TimeCreated, Message -Wrap
+  ```
+
+- l'evento 6008 riporta l'ora dell'ultimo segnale di Windows, cioè più o meno l'ora del blocco. Di solito il registro non contiene nulla dopo quell'ora:
+
+  ```
+  Get-WinEvent -FilterHashtable @{LogName='System'; Id=6008} -MaxEvents 10 | Format-Table TimeCreated, Message -Wrap
+  ```
+
+**Cosa è stato osservato** sul notebook dei test:
+- il 10/11/2026, con la dock Thunderbolt collegata e senza sospensione, due schermate blu `CRITICAL_PROCESS_DIED` (0xEF), alle 12:32 e alle 13:11. Entrambe le volte il notebook è rimasto con lo schermo nero e le ventole accese fino allo spegnimento con il pulsante, la seconda per un'ora e mezza. Win + Ctrl + Maiusc + B non ha avuto effetto. Il riavvio automatico dopo una schermata blu era attivo;
+- dei 12 riavvii senza un regolare arresto dal 5/10 al 10/11, 8 hanno l'evento 161: tutte le 0xEF (cinque), una 0x154 e i due blocchi in ibernazione. In altri due casi (0x154 il 26/10, 0x1000007E il 3/11) il dump è stato scritto: la scrittura sull'SSD esterno quindi funziona, quando il collegamento c'è.
+
+**Causa probabile, non verificata.** Il dump va scritto sul disco di sistema, cioè sull'SSD esterno. Se Windows è andato in schermata blu proprio perché non raggiunge più l'SSD, non può scriverci nemmeno il dump, e resta fermo lì. Anche il file di ibernazione si scrive con lo stesso meccanismo del dump: probabilmente è per questo che l'evento 161 compare anche nei due blocchi in ibernazione.
+
+**Cosa provare, non verificato.** Disattiva la scrittura del dump: dopo una schermata blu Windows dovrebbe riavviarsi da solo.
+1. Premi **Win + R**, scrivi `sysdm.cpl` e premi Invio. Serve un account amministratore.
+2. Apri la scheda **Avanzate**, poi **Avvio e ripristino** → **Impostazioni**.
+3. Annota l'opzione attuale di *Scrivi informazioni di debug*, poi scegli **(nessuna)**. Lascia attivo *Riavvia automaticamente*.
+
+Il valore attuale si legge, in sola lettura, nel *Prompt dei comandi* (non servono i diritti di amministratore): `reg query HKLM\SYSTEM\CurrentControlSet\Control\CrashControl /v CrashDumpEnabled`. `0x0` vuol dire nessun dump; sul notebook dei test era `0x3`. Non perdi molto, perché in questi blocchi il dump non viene scritto comunque. Il codice della schermata blu potrebbe però non essere più registrato: annota data e ora dei blocchi. Per tornare indietro, rimetti l'opzione annotata.
 
 ---
 
@@ -345,7 +379,7 @@ Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositiv
 Sul notebook dei test una dock Thunderbolt 3 è stata collegata per la prima volta il 28/10/2026, su una porta Thunderbolt diversa da quella del box. Da allora, nei registri di Windows:
 - 2/11: blocco nel momento in cui Windows ha riconosciuto il monitor collegato alla dock, con un dump automatico del driver USB (`BUGCODE_USB3_DRIVER`, 0x144);
 - 3/11: tre schermate blu in un'ora (0x1000007E e due 0xEF), due delle quali a pochi secondi dall'avvio. Almeno alla prima la dock era collegata;
-- 10/11: una schermata blu 0xEF durante il normale uso, con la dock collegata.
+- 10/11: due schermate blu 0xEF durante il normale uso (12:32 e 13:11), con la dock collegata. Entrambe le volte Windows è rimasto fermo con lo schermo nero, senza riavviarsi (voce precedente).
 
 Secondo chi ha fatto i test, senza la dock questi blocchi all'avvio non si presentano.
 

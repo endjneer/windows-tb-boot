@@ -114,8 +114,9 @@ The full technical explanation is in [docs/how-it-works.md](docs/how-it-works.md
 | BitLocker unlock from the live session in the repair scripts | ⏳ to be verified |
 | Sleep (Modern Standby, S0) | ⚠️ 187 cycles from 5/10 to 10/11, with three blue screens (0xEF, 0x154) between a few minutes and half an hour after a resume. The hang without a blue screen noticed at first is the one of 16/10, which the event logs show as a transition to hibernation (next row). Data and solutions to try in [docs/troubleshooting.md](docs/troubleshooting.md) |
 | Hibernation | ❌ hung in two attempts out of two (16/10 and 6/11), with a black screen and the fans running until forced off |
-| Thunderbolt 3 dock connected together with the enclosure, on another port | ⚠️ since it was first connected (28/10): a hang when the dock's monitor was recognized (2/11) and four blue screens (3/11 and 10/11), two of them a few seconds after boot. Cause not established |
-| Solutions for sleep, hibernation and the dock (troubleshooting) | ⏳ to be verified |
+| Thunderbolt 3 dock connected together with the enclosure, on another port | ⚠️ since it was first connected (28/10): a hang when the dock's monitor was recognized (2/11) and five blue screens (3/11 and 10/11), two a few seconds after boot and two stuck with a black screen until turned off with the power button. Cause not established |
+| Win + Ctrl + Shift + B during a hang with a black screen | ❌ no effect (10/11): Windows had already stopped with a blue screen, without managing to write the dump |
+| Solutions for sleep, hibernation and the dock, and automatic restart with the dump turned off (troubleshooting) | ⏳ to be verified |
 | Windows Recovery Environment booted from the Thunderbolt SSD, with access to the Windows partition | ✅ verified |
 | Recovery from a restore point | ⏳ to be verified |
 | Ubuntu installed on the external SSD | ⏳ to be verified |
