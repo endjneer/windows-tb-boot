@@ -629,7 +629,7 @@ powercfg /setdcvalueindex SCHEME_CURRENT 4f971e89-eebd-4455-a8de-9e59040e7347 5c
 powercfg /setactive SCHEME_CURRENT
 ```
 
-I due codici indicano il gruppo *Pulsanti di alimentazione e coperchio* e l'impostazione *Azione chiusura coperchio*: sul notebook dei test l'impostazione è nascosta, e i nomi brevi `SUB_BUTTONS LIDACTION` non rispondono. Con il coperchio chiuso il notebook resta acceso: non metterlo in una borsa senza spegnerlo. Per tornare indietro ripeti i primi due comandi con `1` (sospensione) al posto dello `0` finale, poi il terzo.
+Il terzo comando va lanciato per ultimo: è quello che applica le modifiche. I due codici indicano il gruppo *Pulsanti di alimentazione e coperchio* e l'impostazione *Azione chiusura coperchio*: sul notebook dei test l'impostazione è nascosta, e i nomi brevi `SUB_BUTTONS LIDACTION` non rispondono. Con il coperchio chiuso il notebook resta acceso: non metterlo in una borsa senza spegnerlo. Per tornare indietro ripeti i primi due comandi con `1` (sospensione) al posto dello `0` finale, poi il terzo.
 
 Resta la voce *Sospendi* del menu Start: non usarla. Le due impostazioni sono in prova sul notebook dei test dal 18/11/2026: non verificate. Per controllare la situazione in sola lettura, in *PowerShell*, c'è [`windows\check-standby.ps1`](../windows/check-standby.ps1). Se usi una dock Thunderbolt, vedi anche la voce *Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu*.
 

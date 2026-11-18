@@ -106,6 +106,7 @@ $show = { param($v) if ($null -eq $v) { T 'non impostato' 'not set' } else { '0x
 Title (T 'Disco di sistema' 'System disk')
 $pathIds = @()
 $onUsb4 = $false
+$external = $false
 try {
   $disks = @(Get-PnpDevice -PresentOnly -Class DiskDrive)
   $bootName = (Get-Disk | Where-Object { $_.IsBoot } | Select-Object -First 1).FriendlyName
@@ -118,12 +119,16 @@ try {
       $pathIds += $id
       $device = Get-PnpDevice -InstanceId $id -ErrorAction SilentlyContinue
       if ($device -and ("$($device.Service)" -match '^Usb4(Host|Device)Router$')) { $onUsb4 = $true }
+      # A disk tunnelled over PCIe does not descend from the USB4 router device: its
+      # path is made of PCI bridges. What marks it as external is its device container.
+      $local = Get-PnpDeviceProperty -InstanceId $id -KeyName DEVPKEY_Device_InLocalMachineContainer -ErrorAction SilentlyContinue
+      if ($local -and $local.PSObject.Properties['Data'] -and ($local.Data -eq $false)) { $external = $true }
       $parent = Get-PnpDeviceProperty -InstanceId $id -KeyName DEVPKEY_Device_Parent -ErrorAction SilentlyContinue
       # At the root of the tree the property object has no Data member.
       $id = if ($parent -and $parent.PSObject.Properties['Data'] -and $parent.Data) { [string]$parent.Data } else { $null }
     }
-    if ($onUsb4) { T 'Il disco di sistema dipende da un router USB4/Thunderbolt: e'' un disco esterno.' 'The system disk depends on a USB4/Thunderbolt router: it is an external disk.' }
-    else { T 'Sul percorso del disco di sistema non c''e'' un router USB4: disco interno, oppure box in modalita'' USB o su un host Thunderbolt 3.' 'No USB4 router on the system disk path: internal disk, or enclosure in USB mode or on a Thunderbolt 3 host.' }
+    if ($onUsb4 -or $external) { T 'Il disco di sistema risulta esterno al notebook.' 'The system disk appears to be external to the notebook.' }
+    else { T 'Nessun indizio che il disco di sistema sia esterno. Il controllo non riconosce tutti i box: non prenderlo come prova che sia interno.' 'No sign that the system disk is external. The check does not recognize every enclosure: do not take it as proof that it is internal.' }
   } else {
     T 'Disco di sistema non identificato tra i dispositivi.' 'System disk not identified among the devices.'
   }
