@@ -286,13 +286,13 @@ Il notebook non esce dalla sospensione: le ventole girano, lo schermo resta nero
 - ibernazione **bloccata in due tentativi su due** (16/10 e 6/11). Entrambe le volte Windows è uscito dallo standby per passare all'ibernazione (motivo *Sleep, Hibernate, or Shutdown* dell'evento 507) e si è fermato lì, con lo schermo nero e le ventole accese, fino allo spegnimento forzato. L'evento 41 successivo riporta `SleepInProgress = 5`, cioè un passaggio all'ibernazione in corso. Il 6/11 il notebook era a batteria, e il passaggio è partito da solo perché lo standby consumava troppo (*Austerity Battery Drain Budget Exceeded*);
 - circa 2.500 errori PCIe corretti in 30 giorni (evento 17 di WHEA-Logger), quasi tutti sulla porta del chip Thunderbolt del box a cui è collegato l'SSD. Sono soprattutto *Bad TLP*, cioè pacchetti arrivati corrotti e ritrasmessi: riguardano il collegamento PCIe dentro il box, tra il chip e l'SSD, non il cavo;
 - tutto questo c'era già prima del primo collegamento di una dock Thunderbolt, il 28/10. Per i problemi con la dock vedi la voce successiva;
-- il 18/11/2026 un'altra schermata blu 0xEF, questa volta **durante** lo standby moderno e non dopo una ripresa: l'evento 41 riporta `ConnectedStandbyInProgress = true`, e il dump non è stato scritto. Quel giorno *Risparmio energia stato collegamento* era già su *Inattivo* (valore 0) a corrente e a batteria, eppure tra le 11:27 e le 14:36 il registro contiene 73 errori PCIe corretti. A corrente *Entra in sospensione dopo* era su *mai* e *Disattiva schermo dopo* su 5 minuti. Il registro non contiene eventi 506 di quel giorno, quindi non si sa che cosa abbia avviato lo standby. Sull'altra porta Thunderbolt era collegato un monitor USB-C (voce sulla dock).
+- il 18/11/2026 altre due schermate blu 0xEF a meno di un'ora di distanza, questa volta **durante** lo standby moderno e non dopo una ripresa, entrambe dopo una pausa con il notebook inattivo: l'evento 41 riporta `ConnectedStandbyInProgress = true`, e il dump non è stato scritto. Quel giorno *Risparmio energia stato collegamento* era già su *Inattivo* (valore 0) a corrente e a batteria, eppure tra le 11:27 e le 14:36 il registro contiene 73 errori PCIe corretti. A corrente *Entra in sospensione dopo* era su *mai* e *Disattiva schermo dopo* su 5 minuti. Il registro non contiene eventi 506 di quel giorno, quindi non si sa che cosa abbia avviato lo standby. Sull'altra porta Thunderbolt era collegato un monitor USB-C (voce sulla dock).
 
 **Causa probabile, non verificata.** Windows gira dall'SSD del box, e lì ci sono anche il file di paging e quello di ibernazione. In standby Windows mette a riposo i collegamenti PCIe e Thunderbolt. Se alla ripresa il collegamento con l'SSD non torna subito affidabile, Windows non riesce a rileggere la memoria che aveva spostato sul disco e si ferma: schermo nero, oppure schermata blu. Per le schermate blu 0xEF non è mai stato scritto un file di dump, come succede quando il disco di sistema non risponde (voce successiva). L'ibernazione è il caso più delicato: Windows deve scrivere tutta la memoria sull'SSD esterno.
 
 **Controlli in sola lettura**, in *PowerShell* (non servono i diritti di amministratore).
 
-Lo script [`windows\check-standby.ps1`](../windows/check-standby.ps1) li esegue tutti insieme e stampa un riepilogo senza ID dell'hardware, che puoi incollare in una issue. Non è ancora stato provato sul notebook dei test. Di seguito i singoli comandi.
+Lo script [`windows\check-standby.ps1`](../windows/check-standby.ps1) li esegue tutti insieme e stampa un riepilogo senza ID dell'hardware, che puoi incollare in una issue. Sul notebook dei test è stato eseguito una volta (18/11). Di seguito i singoli comandi.
 
 Stati di sospensione supportati dal firmware:
 
@@ -347,7 +347,7 @@ Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositiv
    powercfg /change monitor-timeout-ac 0
    ```
 
-   Lo schermo del notebook resta acceso; i monitor esterni si spengono con il loro pulsante. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_VIDEO VIDEOIDLE`, in secondi. Per tornare indietro ripeti il comando con i minuti che avevi, per esempio `5`.
+   Sul notebook dei test l'impostazione è stata cambiata il 18/11, dopo le due schermate blu di quel giorno: l'esito non c'è ancora. Lo schermo del notebook resta acceso; i monitor esterni si spengono con il loro pulsante. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_VIDEO VIDEOIDLE`, in secondi. Per tornare indietro ripeti il comando con i minuti che avevi, per esempio `5`.
 
 ---
 
@@ -393,7 +393,7 @@ Sul notebook dei test una dock Thunderbolt 3 è stata collegata per la prima vol
 
 Secondo chi ha fatto i test, senza la dock questi blocchi all'avvio non si presentano.
 
-**Un monitor USB-C senza Thunderbolt.** Il 18/11/2026 sull'altra porta Thunderbolt è stato collegato un monitor USB-C che non è Thunderbolt: porta il video in DisplayPort e ha un hub USB, senza tunnel PCIe. In circa tre ore di uso normale non ci sono stati blocchi. C'è stata una schermata blu 0xEF durante lo standby (voce *Dopo la sospensione lo schermo resta nero e le ventole girano*), che i dati non permettono di attribuire al monitor. Prima, per alcuni minuti, un *Dispositivo USB sconosciuto* era comparso e sparito ogni pochi secondi (evento 1011 di Kernel-PnP), senza che si sia capito a quale porta appartenesse; dopo un riavvio non si è ripresentato. Un giorno solo di prove: non verificato.
+**Un monitor USB-C senza Thunderbolt.** Il 18/11/2026 sull'altra porta Thunderbolt è stato collegato un monitor USB-C che non è Thunderbolt: porta il video in DisplayPort e ha un hub USB, senza tunnel PCIe. In circa tre ore di uso normale non ci sono stati blocchi. Ci sono state due schermate blu 0xEF durante lo standby (voce *Dopo la sospensione lo schermo resta nero e le ventole girano*), che i dati non permettono di attribuire al monitor. Prima di quelle, per alcuni minuti, un *Dispositivo USB sconosciuto* era comparso e sparito ogni pochi secondi (evento 1011 di Kernel-PnP), senza che si sia capito a quale porta appartenesse; dopo un riavvio non si è ripresentato. Un giorno solo di prove: non verificato.
 
 **Causa non chiarita.** Sul notebook dei test dock e box dipendono dallo stesso controller Thunderbolt del notebook. Con la correzione di questa guida i driver USB4 partono con Windows (`Start = 0`), quindi la dock viene gestita fin dalle prime fasi dell'avvio, insieme al disco di sistema. Un problema della dock potrebbe così coinvolgere anche il collegamento con l'SSD: è un'ipotesi, non verificata.
 

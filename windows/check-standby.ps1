@@ -7,6 +7,7 @@
 #
 # The output contains no hardware IDs, serial numbers or device names, so it can
 # be pasted into an issue as it is. Only the "powercfg /a" section is localized.
+# First run on real hardware: 18/11/2026.
 #
 # Usage, in PowerShell (administrator rights are not needed):
 #   .\check-standby.ps1              last 30 days
@@ -118,7 +119,8 @@ try {
       $device = Get-PnpDevice -InstanceId $id -ErrorAction SilentlyContinue
       if ($device -and ("$($device.Service)" -match '^Usb4(Host|Device)Router$')) { $onUsb4 = $true }
       $parent = Get-PnpDeviceProperty -InstanceId $id -KeyName DEVPKEY_Device_Parent -ErrorAction SilentlyContinue
-      $id = if ($parent) { $parent.Data } else { $null }
+      # At the root of the tree the property object has no Data member.
+      $id = if ($parent -and $parent.PSObject.Properties['Data'] -and $parent.Data) { [string]$parent.Data } else { $null }
     }
     if ($onUsb4) { T 'Il disco di sistema dipende da un router USB4/Thunderbolt: e'' un disco esterno.' 'The system disk depends on a USB4/Thunderbolt router: it is an external disk.' }
     else { T 'Sul percorso del disco di sistema non c''e'' un router USB4: disco interno, oppure box in modalita'' USB o su un host Thunderbolt 3.' 'No USB4 router on the system disk path: internal disk, or enclosure in USB mode or on a Thunderbolt 3 host.' }
