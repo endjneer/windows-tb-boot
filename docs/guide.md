@@ -619,7 +619,19 @@ If the notebook hangs after a break even with *Sleep after* set to *never*, stan
 powercfg /change monitor-timeout-ac 0
 ```
 
-The display no longer turns off by itself: turn external monitors off with their own button. Do not close the lid and do not use *Sleep*, which start standby anyway. To undo, repeat the command with the minutes you had, for example `5`. On the notebook used in testing it has been on trial since 18/11/2026: not verified. To check the situation read-only, in *PowerShell*, there is [`windows\check-standby.ps1`](../windows/check-standby.ps1). If you use a Thunderbolt dock, see also *With a Thunderbolt dock connected Windows hangs or shows a blue screen*.
+The display no longer turns off by itself: turn external monitors off with their own button. To undo, repeat the command with the minutes you had, for example `5`.
+
+Closing the lid starts standby too: on the notebook used in testing, on 18/11/2026, it ended in a blue screen. To set it to *Do nothing*, on AC and on battery, in the *Command Prompt as administrator*:
+
+```
+powercfg /setacvalueindex SCHEME_CURRENT 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
+powercfg /setdcvalueindex SCHEME_CURRENT 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
+powercfg /setactive SCHEME_CURRENT
+```
+
+The two codes are the *Power buttons and lid* group and the *Lid close action* setting: on the notebook used in testing the setting is hidden, and the short names `SUB_BUTTONS LIDACTION` do not answer. With the lid closed the notebook stays on: do not put it in a bag without shutting it down. To undo, repeat the first two commands with `1` (sleep) instead of the final `0`, then the third.
+
+The *Sleep* entry of the Start menu remains: do not use it. The two settings have been on trial on the notebook used in testing since 18/11/2026: not verified. To check the situation read-only, in *PowerShell*, there is [`windows\check-standby.ps1`](../windows/check-standby.ps1). If you use a Thunderbolt dock, see also *With a Thunderbolt dock connected Windows hangs or shows a blue screen*.
 
 ### 5.8 Restore points
 
