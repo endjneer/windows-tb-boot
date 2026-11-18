@@ -118,6 +118,7 @@ La spiegazione tecnica completa è in [docs/how-it-works.it.md](docs/how-it-work
 | Monitor USB-C senza Thunderbolt (DisplayPort e hub USB) collegato insieme al box, su un'altra porta | ⚠️ un giorno solo (18/11): quattro schermate blu 0xEF senza dump, tre all'ingresso in standby e una a pochi minuti da un avvio, con alcune ore di uso normale in mezzo. Non attribuibili con certezza al monitor |
 | Win + Ctrl + Maiusc + B durante un blocco con lo schermo nero | ❌ nessun effetto (10/11): Windows era già andato in schermata blu, senza riuscire a scrivere il dump |
 | Soluzioni per sospensione, ibernazione e dock, e riavvio automatico con il dump disattivato (problemi frequenti) | ⏳ da verificare |
+| Standby evitato a corrente: coperchio su *Non intervenire* e schermo mai spento (guida, punto 5.7) | ⚠️ coperchio: una prova riuscita (18/11), senza standby e senza blocchi; schermo: in prova dal 18/11 |
 | Script `check-standby.ps1`: i controlli in sola lettura su sospensione e blocchi, in un riepilogo | ⚠️ eseguito una volta (18/11) |
 | Ambiente di ripristino di Windows avviato dall'SSD Thunderbolt, con accesso alla partizione di Windows | ✅ verificato |
 | Ripristino da un punto di ripristino | ⏳ da verificare |

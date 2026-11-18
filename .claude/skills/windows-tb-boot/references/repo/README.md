@@ -118,6 +118,7 @@ The full technical explanation is in [docs/how-it-works.md](docs/how-it-works.md
 | USB-C monitor without Thunderbolt (DisplayPort and USB hub) connected together with the enclosure, on another port | ⚠️ a single day (18/11): four 0xEF blue screens with no dump, three on entering standby and one a few minutes after a boot, with a few hours of normal use in between. Not attributable to the monitor with certainty |
 | Win + Ctrl + Shift + B during a hang with a black screen | ❌ no effect (10/11): Windows had already stopped with a blue screen, without managing to write the dump |
 | Solutions for sleep, hibernation and the dock, and automatic restart with the dump turned off (troubleshooting) | ⏳ to be verified |
+| Standby avoided on AC: lid set to *Do nothing* and display never turned off (guide, step 5.7) | ⚠️ lid: one successful test (18/11), with no standby and no hang; display: on trial since 18/11 |
 | `check-standby.ps1` script: the read-only checks on sleep and hangs, in one summary | ⚠️ run once (18/11) |
 | Windows Recovery Environment booted from the Thunderbolt SSD, with access to the Windows partition | ✅ verified |
 | Recovery from a restore point | ⏳ to be verified |

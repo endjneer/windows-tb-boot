@@ -631,7 +631,7 @@ powercfg /setactive SCHEME_CURRENT
 
 Il terzo comando va lanciato per ultimo: è quello che applica le modifiche. I due codici indicano il gruppo *Pulsanti di alimentazione e coperchio* e l'impostazione *Operazione chiusura coperchio*. Sul notebook dei test l'impostazione è nascosta: `powercfg /query` non la mostra, e il valore attuale si legge con `powercfg /qh SCHEME_CURRENT` seguito dagli stessi due codici (`0` *Non intervenire*, `1` *Sospendi*). Con il coperchio chiuso il notebook resta acceso: non metterlo in una borsa senza spegnerlo. Per tornare indietro ripeti i primi due comandi con `1` (sospensione) al posto dello `0` finale, poi il terzo.
 
-Resta la voce *Sospendi* del menu Start: non usarla. Le due impostazioni sono in prova sul notebook dei test dal 18/11/2026: non verificate. Per controllare la situazione in sola lettura, in *PowerShell*, c'è [`windows\check-standby.ps1`](../windows/check-standby.ps1). Se usi una dock Thunderbolt, vedi anche la voce *Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu*.
+Resta la voce *Sospendi* del menu Start: non usarla. Sul notebook dei test, il 18/11/2026, con il coperchio su *Non intervenire* la chiusura non ha avviato lo standby e non c'è stato nessun blocco, con un monitor USB-C collegato: è una prova sola. Lo spegnimento dello schermo disattivato è in prova dallo stesso giorno. Per controllare la situazione in sola lettura, in *PowerShell*, c'è [`windows\check-standby.ps1`](../windows/check-standby.ps1). Se usi una dock Thunderbolt, vedi anche la voce *Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu*.
 
 ### 5.8 Punti di ripristino
 
