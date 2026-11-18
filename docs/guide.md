@@ -629,7 +629,7 @@ powercfg /setdcvalueindex SCHEME_CURRENT 4f971e89-eebd-4455-a8de-9e59040e7347 5c
 powercfg /setactive SCHEME_CURRENT
 ```
 
-The third command must come last: it is the one that applies the changes. The two codes are the *Power buttons and lid* group and the *Lid close action* setting: on the notebook used in testing the setting is hidden, and the short names `SUB_BUTTONS LIDACTION` do not answer. With the lid closed the notebook stays on: do not put it in a bag without shutting it down. To undo, repeat the first two commands with `1` (sleep) instead of the final `0`, then the third.
+The third command must come last: it is the one that applies the changes. The two codes are the *Power buttons and lid* group and the *Lid close action* setting. On the notebook used in testing the setting is hidden: `powercfg /query` does not show it, and the current value can be read with `powercfg /qh SCHEME_CURRENT` followed by the same two codes (`0` *Do nothing*, `1` *Sleep*). With the lid closed the notebook stays on: do not put it in a bag without shutting it down. To undo, repeat the first two commands with `1` (sleep) instead of the final `0`, then the third.
 
 The *Sleep* entry of the Start menu remains: do not use it. The two settings have been on trial on the notebook used in testing since 18/11/2026: not verified. To check the situation read-only, in *PowerShell*, there is [`windows\check-standby.ps1`](../windows/check-standby.ps1). If you use a Thunderbolt dock, see also *With a Thunderbolt dock connected Windows hangs or shows a blue screen*.
 

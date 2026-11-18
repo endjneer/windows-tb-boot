@@ -340,7 +340,7 @@ Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositiv
 
    Sul notebook dei test era su *Risparmio energia massimo* (valore 2), sia a corrente sia a batteria. Per un collegamento con errori, i passaggi da e verso il risparmio energetico sono il momento più delicato. In standby il consumo potrebbe aumentare. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. Per tornare indietro ripeti i primi due comandi con `2` al posto di `0`, poi il terzo. Il 18/11, con il valore già a 0, gli errori PCIe e una schermata blu durante lo standby si sono ripresentati: da sola questa modifica non è bastata.
 5. **Controlla l'SSD nel box**, a PC spento e box scollegato: che sia inserito bene nello slot M.2 e raffreddato come previsto dal box. Gli errori *Bad TLP* sul collegamento tra il chip e l'SSD possono dipendere anche da un contatto o dalla temperatura.
-6. Finché non trovi una configurazione stabile, **spegni invece di sospendere** (guida, punto 5.7). Nelle opzioni risparmio energia puoi impostare la chiusura del coperchio su *Arresta il sistema*, oppure su *Nessuna azione* con i comandi del punto 5.7 della guida.
+6. Finché non trovi una configurazione stabile, **spegni invece di sospendere** (guida, punto 5.7). Nelle opzioni risparmio energia puoi impostare la chiusura del coperchio su *Arresta il sistema*, oppure su *Non intervenire* con i comandi del punto 5.7 della guida.
 7. **Non far spegnere lo schermo a corrente**, se i blocchi arrivano dopo una pausa anche con *Entra in sospensione dopo* su *mai*. Sui notebook che hanno solo lo standby moderno, lo spegnimento dello schermo per inattività potrebbe avviare lo standby: è un'ipotesi, non verificata. Nel *Prompt dei comandi*:
 
    ```
