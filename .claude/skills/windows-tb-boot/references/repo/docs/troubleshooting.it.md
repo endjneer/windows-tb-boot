@@ -285,11 +285,14 @@ Il notebook non esce dalla sospensione: le ventole girano, lo schermo resta nero
 - 187 cicli di standby moderno, con tre schermate blu tra pochi minuti e mezz'ora dopo una ripresa (0xEF il 15/10, 0x154 il 23/10 e il 26/10);
 - ibernazione **bloccata in due tentativi su due** (16/10 e 6/11). Entrambe le volte Windows è uscito dallo standby per passare all'ibernazione (motivo *Sleep, Hibernate, or Shutdown* dell'evento 507) e si è fermato lì, con lo schermo nero e le ventole accese, fino allo spegnimento forzato. L'evento 41 successivo riporta `SleepInProgress = 5`, cioè un passaggio all'ibernazione in corso. Il 6/11 il notebook era a batteria, e il passaggio è partito da solo perché lo standby consumava troppo (*Austerity Battery Drain Budget Exceeded*);
 - circa 2.500 errori PCIe corretti in 30 giorni (evento 17 di WHEA-Logger), quasi tutti sulla porta del chip Thunderbolt del box a cui è collegato l'SSD. Sono soprattutto *Bad TLP*, cioè pacchetti arrivati corrotti e ritrasmessi: riguardano il collegamento PCIe dentro il box, tra il chip e l'SSD, non il cavo;
-- tutto questo c'era già prima del primo collegamento di una dock Thunderbolt, il 28/10. Per i problemi con la dock vedi la voce successiva.
+- tutto questo c'era già prima del primo collegamento di una dock Thunderbolt, il 28/10. Per i problemi con la dock vedi la voce successiva;
+- il 18/11/2026 un'altra schermata blu 0xEF, questa volta **durante** lo standby moderno e non dopo una ripresa: l'evento 41 riporta `ConnectedStandbyInProgress = true`, e il dump non è stato scritto. Quel giorno *Risparmio energia stato collegamento* era già su *Inattivo* (valore 0) a corrente e a batteria, eppure tra le 11:27 e le 14:36 il registro contiene 73 errori PCIe corretti. A corrente *Entra in sospensione dopo* era su *mai* e *Disattiva schermo dopo* su 5 minuti. Il registro non contiene eventi 506 di quel giorno, quindi non si sa che cosa abbia avviato lo standby. Sull'altra porta Thunderbolt era collegato un monitor USB-C (voce sulla dock).
 
 **Causa probabile, non verificata.** Windows gira dall'SSD del box, e lì ci sono anche il file di paging e quello di ibernazione. In standby Windows mette a riposo i collegamenti PCIe e Thunderbolt. Se alla ripresa il collegamento con l'SSD non torna subito affidabile, Windows non riesce a rileggere la memoria che aveva spostato sul disco e si ferma: schermo nero, oppure schermata blu. Per le schermate blu 0xEF non è mai stato scritto un file di dump, come succede quando il disco di sistema non risponde (voce successiva). L'ibernazione è il caso più delicato: Windows deve scrivere tutta la memoria sull'SSD esterno.
 
 **Controlli in sola lettura**, in *PowerShell* (non servono i diritti di amministratore).
+
+Lo script [`windows\check-standby.ps1`](../windows/check-standby.ps1) li esegue tutti insieme e stampa un riepilogo senza ID dell'hardware, che puoi incollare in una issue. Non è ancora stato provato sul notebook dei test. Di seguito i singoli comandi.
 
 Stati di sospensione supportati dal firmware:
 
@@ -297,10 +300,10 @@ Stati di sospensione supportati dal firmware:
 powercfg /a
 ```
 
-Riavvii senza un regolare arresto (evento 41). `BugcheckCode` è il codice della schermata blu, `0x0` se il notebook è stato spento con il pulsante; `SleepInProgress = 5` indica un passaggio all'ibernazione in corso:
+Riavvii senza un regolare arresto (evento 41). `BugcheckCode` è il codice della schermata blu, `0x0` se il notebook è stato spento con il pulsante; `SleepInProgress = 5` indica un passaggio all'ibernazione in corso; `ConnectedStandbyInProgress = true` indica che lo standby moderno era in corso:
 
 ```
-Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=41} | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; [pscustomobject]@{ Ora = $_.TimeCreated; BugcheckCode = '0x{0:X}' -f [int64]$d.BugcheckCode; SleepInProgress = $d.SleepInProgress } }
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=41} | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; [pscustomobject]@{ Ora = $_.TimeCreated; BugcheckCode = '0x{0:X}' -f [int64]$d.BugcheckCode; SleepInProgress = $d.SleepInProgress; ConnectedStandbyInProgress = $d.ConnectedStandbyInProgress } }
 ```
 
 Le ultime 40 entrate e uscite dallo standby moderno, con il motivo (eventi 506 e 507):
@@ -335,9 +338,16 @@ Confronta i nomi con l'output di `windows\show-disk-paths.ps1`: se il dispositiv
    powercfg /setactive SCHEME_CURRENT
    ```
 
-   Sul notebook dei test era su *Risparmio energia massimo* (valore 2), sia a corrente sia a batteria. Per un collegamento con errori, i passaggi da e verso il risparmio energetico sono il momento più delicato. In standby il consumo potrebbe aumentare. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. Per tornare indietro ripeti i primi due comandi con `2` al posto di `0`, poi il terzo.
+   Sul notebook dei test era su *Risparmio energia massimo* (valore 2), sia a corrente sia a batteria. Per un collegamento con errori, i passaggi da e verso il risparmio energetico sono il momento più delicato. In standby il consumo potrebbe aumentare. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. Per tornare indietro ripeti i primi due comandi con `2` al posto di `0`, poi il terzo. Il 18/11, con il valore già a 0, gli errori PCIe e una schermata blu durante lo standby si sono ripresentati: da sola questa modifica non è bastata.
 5. **Controlla l'SSD nel box**, a PC spento e box scollegato: che sia inserito bene nello slot M.2 e raffreddato come previsto dal box. Gli errori *Bad TLP* sul collegamento tra il chip e l'SSD possono dipendere anche da un contatto o dalla temperatura.
 6. Finché non trovi una configurazione stabile, **spegni invece di sospendere** (guida, punto 5.7). Nelle opzioni risparmio energia puoi impostare la chiusura del coperchio su *Arresta il sistema*.
+7. **Non far spegnere lo schermo a corrente**, se i blocchi arrivano dopo una pausa anche con *Entra in sospensione dopo* su *mai*. Sui notebook che hanno solo lo standby moderno, lo spegnimento dello schermo per inattività potrebbe avviare lo standby: è un'ipotesi, non verificata. Nel *Prompt dei comandi*:
+
+   ```
+   powercfg /change monitor-timeout-ac 0
+   ```
+
+   Lo schermo del notebook resta acceso; i monitor esterni si spengono con il loro pulsante. Il valore attuale si legge con `powercfg /q SCHEME_CURRENT SUB_VIDEO VIDEOIDLE`, in secondi. Per tornare indietro ripeti il comando con i minuti che avevi, per esempio `5`.
 
 ---
 
@@ -382,6 +392,8 @@ Sul notebook dei test una dock Thunderbolt 3 è stata collegata per la prima vol
 - 10/11: due schermate blu 0xEF durante il normale uso (12:32 e 13:11), con la dock collegata. Entrambe le volte Windows è rimasto fermo con lo schermo nero, senza riavviarsi (voce precedente).
 
 Secondo chi ha fatto i test, senza la dock questi blocchi all'avvio non si presentano.
+
+**Un monitor USB-C senza Thunderbolt.** Il 18/11/2026 sull'altra porta Thunderbolt è stato collegato un monitor USB-C che non è Thunderbolt: porta il video in DisplayPort e ha un hub USB, senza tunnel PCIe. In circa tre ore di uso normale non ci sono stati blocchi. C'è stata una schermata blu 0xEF durante lo standby (voce *Dopo la sospensione lo schermo resta nero e le ventole girano*), che i dati non permettono di attribuire al monitor. Prima, per alcuni minuti, un *Dispositivo USB sconosciuto* era comparso e sparito ogni pochi secondi (evento 1011 di Kernel-PnP), senza che si sia capito a quale porta appartenesse; dopo un riavvio non si è ripresentato. Un giorno solo di prove: non verificato.
 
 **Causa non chiarita.** Sul notebook dei test dock e box dipendono dallo stesso controller Thunderbolt del notebook. Con la correzione di questa guida i driver USB4 partono con Windows (`Start = 0`), quindi la dock viene gestita fin dalle prime fasi dell'avvio, insieme al disco di sistema. Un problema della dock potrebbe così coinvolgere anche il collegamento con l'SSD: è un'ipotesi, non verificata.
 

@@ -285,11 +285,14 @@ The notebook does not come out of sleep: the fans spin, the screen stays black, 
 - 187 Modern Standby cycles, with three blue screens between a few minutes and half an hour after a resume (0xEF on 15/10, 0x154 on 23/10 and 26/10);
 - hibernation **hung in two attempts out of two** (16/10 and 6/11). Both times Windows left standby to go into hibernation (reason *Sleep, Hibernate, or Shutdown* of event 507) and stopped there, with a black screen and the fans running, until it was forced off. The following event 41 reports `SleepInProgress = 5`, that is, a transition to hibernation in progress. On 6/11 the notebook was on battery, and the transition started by itself because standby was using too much power (*Austerity Battery Drain Budget Exceeded*);
 - about 2,500 corrected PCIe errors in 30 days (WHEA-Logger event 17), almost all on the port of the enclosure's Thunderbolt chip that the SSD is connected to. They are mostly *Bad TLP*, that is, packets that arrived corrupted and were retransmitted: they concern the PCIe link inside the enclosure, between the chip and the SSD, not the cable;
-- all of this was already happening before a Thunderbolt dock was connected for the first time, on 28/10. For the problems with the dock, see the next entry.
+- all of this was already happening before a Thunderbolt dock was connected for the first time, on 28/10. For the problems with the dock, see the next entry;
+- on 18/11/2026 another 0xEF blue screen, this time **during** Modern Standby and not after a resume: event 41 reports `ConnectedStandbyInProgress = true`, and the dump was not written. That day *Link State Power Management* was already *Off* (value 0) on AC and on battery, yet between 11:27 and 14:36 the log contains 73 corrected PCIe errors. On AC *Sleep after* was set to *never* and *Turn off the display after* to 5 minutes. The log contains no 506 events for that day, so what started standby is not known. A USB-C monitor was connected to the other Thunderbolt port (entry about the dock).
 
 **Probable cause, not verified.** Windows runs from the SSD in the enclosure, and the paging file and the hibernation file are there too. In standby Windows puts the PCIe and Thunderbolt links to rest. If at resume the link to the SSD is not reliable straight away, Windows cannot read back the memory it had moved to disk and stops: black screen, or blue screen. For the 0xEF blue screens no dump file was ever written, as happens when the system drive does not respond (next entry). Hibernation is the most delicate case: Windows has to write all of memory to the external SSD.
 
 **Read-only checks**, in *PowerShell* (no administrator rights needed).
+
+The script [`windows\check-standby.ps1`](../windows/check-standby.ps1) runs them all together and prints a summary with no hardware IDs, which you can paste into an issue. It has not been tried on the notebook used in testing yet. The single commands follow.
 
 Sleep states supported by the firmware:
 
@@ -297,10 +300,10 @@ Sleep states supported by the firmware:
 powercfg /a
 ```
 
-Restarts without a clean shutdown (event 41). `BugcheckCode` is the blue screen code, `0x0` if the notebook was turned off with the power button; `SleepInProgress = 5` means a transition to hibernation was in progress:
+Restarts without a clean shutdown (event 41). `BugcheckCode` is the blue screen code, `0x0` if the notebook was turned off with the power button; `SleepInProgress = 5` means a transition to hibernation was in progress; `ConnectedStandbyInProgress = true` means Modern Standby was in progress:
 
 ```
-Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=41} | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; [pscustomobject]@{ Time = $_.TimeCreated; BugcheckCode = '0x{0:X}' -f [int64]$d.BugcheckCode; SleepInProgress = $d.SleepInProgress } }
+Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-Kernel-Power'; Id=41} | ForEach-Object { $d = @{}; ([xml]$_.ToXml()).Event.EventData.Data | ForEach-Object { $d[$_.Name] = $_.'#text' }; [pscustomobject]@{ Time = $_.TimeCreated; BugcheckCode = '0x{0:X}' -f [int64]$d.BugcheckCode; SleepInProgress = $d.SleepInProgress; ConnectedStandbyInProgress = $d.ConnectedStandbyInProgress } }
 ```
 
 The last 40 Modern Standby entries and exits, with the reason (events 506 and 507):
@@ -335,9 +338,16 @@ Compare the names with the output of `windows\show-disk-paths.ps1`: if the devic
    powercfg /setactive SCHEME_CURRENT
    ```
 
-   On the notebook used in testing it was set to *Maximum power savings* (value 2), both on AC and on battery. For a link with errors, the transitions into and out of power saving are the most delicate moment. Power use in standby may increase. The current value can be read with `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. To undo, repeat the first two commands with `2` instead of `0`, then the third.
+   On the notebook used in testing it was set to *Maximum power savings* (value 2), both on AC and on battery. For a link with errors, the transitions into and out of power saving are the most delicate moment. Power use in standby may increase. The current value can be read with `powercfg /q SCHEME_CURRENT SUB_PCIEXPRESS ASPM`. To undo, repeat the first two commands with `2` instead of `0`, then the third. On 18/11, with the value already at 0, the PCIe errors and a blue screen during standby came back: this change alone was not enough.
 5. **Check the SSD in the enclosure**, with the PC off and the enclosure disconnected: that it is seated properly in the M.2 slot and cooled as the enclosure intends. *Bad TLP* errors on the link between the chip and the SSD can also come from a contact or from temperature.
 6. Until you find a stable configuration, **shut down instead of sleeping** (guide, step 5.7). In the power options you can set closing the lid to *Shut down*.
+7. **Keep the display from turning off on AC**, if the hangs come after a break even with *Sleep after* set to *never*. On notebooks that have only Modern Standby, the display turning off for inactivity may start standby: this is a hypothesis, not verified. In the *Command Prompt*:
+
+   ```
+   powercfg /change monitor-timeout-ac 0
+   ```
+
+   The notebook's display stays on; turn external monitors off with their own button. The current value can be read with `powercfg /q SCHEME_CURRENT SUB_VIDEO VIDEOIDLE`, in seconds. To undo, repeat the command with the minutes you had, for example `5`.
 
 ---
 
@@ -382,6 +392,8 @@ On the notebook used in testing a Thunderbolt 3 dock was connected for the first
 - 10/11: two 0xEF blue screens during normal use (12:32 and 13:11), with the dock connected. Both times Windows stayed stuck with a black screen, without restarting (previous entry).
 
 According to the person who ran the tests, without the dock these hangs at boot do not happen.
+
+**A USB-C monitor without Thunderbolt.** On 18/11/2026 a USB-C monitor that is not Thunderbolt was connected to the other Thunderbolt port: it carries video over DisplayPort and has a USB hub, with no PCIe tunnel. In about three hours of normal use there were no hangs. There was one 0xEF blue screen during standby (entry *After sleep the screen stays black and the fans keep running*), which the data do not allow to attribute to the monitor. Earlier, for a few minutes, an *Unknown USB Device* had appeared and disappeared every few seconds (Kernel-PnP event 1011), and it was not established which port it belonged to; after a restart it did not come back. A single day of tests: not verified.
 
 **Cause not established.** On the notebook used in testing the dock and the enclosure depend on the same Thunderbolt controller of the notebook. With this guide's fix the USB4 drivers start with Windows (`Start = 0`), so the dock is handled from the earliest stages of boot, together with the system drive. A problem with the dock could therefore also affect the link to the SSD: this is a hypothesis, not verified.
 

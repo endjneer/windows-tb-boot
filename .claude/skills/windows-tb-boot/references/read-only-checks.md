@@ -20,6 +20,7 @@ The commands below only read. In shell mode you may run them yourself; in chat m
 *PowerShell as administrator*:
 - `windows\usb4-boot-guard\usb4-boot-guard.ps1 -Status`: state of the `Usb4BootGuard` service and its latest events; exit code 1 if something is wrong (guide §5.9).
 - `windows\show-disk-paths.ps1`: which controller each disk depends on. In the external Windows only the SSD should appear (guide §5.5).
+- `windows\check-standby.ps1`: sleep states, power settings, restarts without a clean shutdown with their stop code, dump write failures, Modern Standby entries and corrected PCIe errors, in one summary with no hardware IDs (guide §5.7). Not verified on the tested laptop yet. Administrator rights are not needed.
 
 ## WinRE prompt
 
