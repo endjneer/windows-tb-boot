@@ -611,7 +611,15 @@ Salva **sia l'ID sia la password numerica**. La password è la chiave vera e pro
 
 Sul notebook dei test il firmware supporta solo lo standby moderno (S0). Dal 5/10 al 10/11/2026 lo standby ha funzionato quasi sempre, in 187 cicli, ma ci sono state tre schermate blu poco dopo una ripresa. L'ibernazione si è bloccata in due tentativi su due, con lo schermo nero e le ventole accese. Una causa probabile, non verificata, è il collegamento tra il chip del box e l'SSD, che registra errori PCIe anche nel normale funzionamento. Dati, controlli in sola lettura e soluzioni da provare sono in [troubleshooting.it.md](troubleshooting.it.md), alla voce *Dopo la sospensione lo schermo resta nero e le ventole girano*.
 
-Finché non hai una configurazione stabile, spegni il PC invece di sospenderlo. Se usi una dock Thunderbolt, vedi anche la voce *Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu*.
+Finché non hai una configurazione stabile, spegni il PC invece di sospenderlo.
+
+Se il notebook si blocca dopo una pausa anche con *Entra in sospensione dopo* su *mai*, è probabile che lo standby parta quando lo schermo si spegne per inattività. Per impedirlo a corrente, nel *Prompt dei comandi*:
+
+```
+powercfg /change monitor-timeout-ac 0
+```
+
+Lo schermo non si spegne più da solo: i monitor esterni si spengono con il loro pulsante. Non chiudere il coperchio e non usare *Sospendi*, che avviano lo standby comunque. Per tornare indietro ripeti il comando con i minuti che avevi, per esempio `5`. Sul notebook dei test è in prova dal 18/11/2026: non verificato. Per controllare la situazione in sola lettura, in *PowerShell*, c'è [`windows\check-standby.ps1`](../windows/check-standby.ps1). Se usi una dock Thunderbolt, vedi anche la voce *Con una dock Thunderbolt collegata Windows si blocca o va in schermata blu*.
 
 ### 5.8 Punti di ripristino
 
