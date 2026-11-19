@@ -402,4 +402,5 @@ According to the person who ran the tests, without the dock these hangs at boot 
 1. **Connect the enclosure directly to the notebook**, never to the dock: it is the system drive.
 2. **Power on without the dock** and connect it only after signing in to Windows. Note whether the hangs at boot go away.
 3. **Update the dock's firmware** with the manufacturer's tool. It does not concern the notebook's BIOS, but it has not been tried in this configuration.
-4. If the problems remain, a USB-C dock **without Thunderbolt** (USB and DisplayPort only, no PCIe tunnel) might avoid them.
+4. A USB-C dock or monitor **without Thunderbolt** (USB and DisplayPort only, no PCIe tunnel) is not enough to avoid them: on the notebook used in testing, on 18 and 19/11, the blue screens happened that way too (see below). The device still occupies the other Thunderbolt port.
+5. **Connect the monitor to a video output that does not go through Thunderbolt**, for example the notebook's HDMI port, and leave the Thunderbolt ports to the enclosure alone. If the monitor has a USB hub, connect it with a USB-A cable. The notebook used in testing has been set up this way since the afternoon of 19/11: there is no outcome over several days yet.

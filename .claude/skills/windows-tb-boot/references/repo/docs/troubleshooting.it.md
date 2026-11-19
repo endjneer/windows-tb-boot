@@ -402,4 +402,5 @@ Secondo chi ha fatto i test, senza la dock questi blocchi all'avvio non si prese
 1. **Collega il box direttamente al notebook**, mai alla dock: è il disco di sistema.
 2. **Accendi senza la dock** e collegala solo dopo l'accesso a Windows. Annota se i blocchi all'avvio spariscono.
 3. **Aggiorna il firmware della dock** con lo strumento del produttore. Non riguarda il BIOS del notebook, ma in questa configurazione non è stato provato.
-4. Se i problemi restano, una dock USB-C **senza Thunderbolt** (solo USB e DisplayPort, senza tunnel PCIe) potrebbe evitarli.
+4. Una dock o un monitor USB-C **senza Thunderbolt** (solo USB e DisplayPort, senza tunnel PCIe) non basta a evitarli: sul notebook dei test, il 18 e 19/11, le schermate blu ci sono state anche così (vedi sotto). Il dispositivo occupa comunque l'altra porta Thunderbolt.
+5. **Collega il monitor a un'uscita video che non passa dalla Thunderbolt**, per esempio l'HDMI del notebook, e lascia le porte Thunderbolt al solo box. Se il monitor ha un hub USB, collegalo con un cavo USB-A. Sul notebook dei test è così dal pomeriggio del 19/11: l'esito su più giorni non c'è ancora.
